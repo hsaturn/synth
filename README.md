@@ -3,6 +3,16 @@ SDL Sound complex generator in command line.
 
 This one file c++ file is able to generate very complicated sound such as a synthetiser.
 
+# features
+Auto mixing all sound generation of this kind :
+
+sinus
+square
+triangle
+distorsion
+frequency modulation (any signal)
+amplitude modulation (any signal)
+
 # examples
 
 440Hz sinus for 1000ms (1s)
