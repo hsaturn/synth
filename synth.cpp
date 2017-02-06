@@ -11,18 +11,14 @@
 
 using namespace std;
 
-const int ECH = 48000;
-const int BUF_LENGTH = 1024;
+int ech = 48000;
+const int BUF_LENGTH = 8192;
 
 class SoundGenerator
 {
 	public:
-		static const int ech = ECH;
-
-
-
 		virtual ~SoundGenerator() {};
-		virtual void next(float &left, float &right) = 0;
+		virtual void next(float &left, float &right, float speed=1.0) = 0;
 
 		static SoundGenerator* factory(istream& in);
 		static string getTypes()
@@ -87,12 +83,14 @@ class SoundGenerator
 		float volume;
 		float freq;
 
+		static string last_type;
 	private:
 		static map<string, const SoundGenerator*> generators;
 
 		// For the factory
 };
 
+string SoundGenerator::last_type;
 map<string, const SoundGenerator*> SoundGenerator::generators;
 
 class TriangleGenerator : public SoundGenerator
@@ -110,9 +108,9 @@ class TriangleGenerator : public SoundGenerator
 			cout << "TRIANGLE FREQUENCY : " << freq << ' ' << da << endl;
 		}
 
-		virtual void next(float &left, float &right)
+		virtual void next(float &left, float &right, float speed=1.0)
 		{
-			a += da * (float)sign;
+			a += da * speed * (float)sign;
 			float dv=a;
 			if (dv>1)
 			{
@@ -153,9 +151,9 @@ class SquareGenerator : public SoundGenerator
 			invert = (float)(ech>>1) / freq;
 		}
 
-		virtual void next(float &left, float &right)
+		virtual void next(float &left, float &right, float speed=1.0)
 		{
-			a ++;
+			a += speed;
 			left += (float)val * volume;
 			right += (float)val * volume;
 			if (a > invert)
@@ -189,11 +187,11 @@ class SinusGenerator : public SoundGenerator
 			cout << "SINUS FREQUENCY : " << freq << endl;
 		}
 
-		virtual void next(float &left, float &right)
+		virtual void next(float &left, float &right, float speed=1.0)
 		{
 			static int count=0;
 			count++;
-			a += da;
+			a += da * speed;
 			float s = sin(a);
 			left += volume * s;
 			right += volume * s;
@@ -233,10 +231,10 @@ class DistortionGenerator : public SoundGenerator
 			level = level/100+1.0f;
 		}
 		
-		virtual void next(float &left, float &right)
+		virtual void next(float &left, float &right, float speed)
 		{
 			float l,r;
-			generator->next(l,r);
+			generator->next(l,r, speed);
 			l *= level;
 			r *= level;
 
@@ -258,12 +256,123 @@ class DistortionGenerator : public SoundGenerator
 		SoundGenerator* generator;
 };
 
+class FmGenerator : public SoundGenerator
+{
+	public:
+		FmGenerator() : SoundGenerator("fm") {}	// for thefactory
+
+		FmGenerator(istream& in)
+		{
+			a = 0;
+			in >> min;
+			in >> max;
+
+			if (in.good()) generator = SoundGenerator::factory(in);
+			if (in.good()) modulator = SoundGenerator::factory(in);
+
+			if (min<0 || min>200 || max<0 || max>200 || modulator == 0 || generator == 0 || max<min)
+			{
+				cerr << "fm generator syntax is :" << endl;
+				cerr << "  fm min max {sound_generator} {sound_modulator}" << endl;
+				cerr << "  min : minimum frequency shifting level" << endl;
+				cerr << "  max : max frequency shifting (0..200)" << endl;
+				cerr << "  sound_generator : a sound generator (as usual)" << endl;
+				cerr << "  sound_modulator : the frequency modulator (another sound generator)" << endl;
+				cerr << "  ex: fm 80 120 sq 220 sin 10 : 220Hz square modulated with sinus" << endl;
+				cerr << endl;
+				cerr << "yet defined values where min:" << min << " max:" << max << " generator:" << generator << " modulator:" << modulator << endl;
+				exit(1);
+			}
+
+			max /= 100.0;
+			min /= 100.0;
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			if (min == max)
+			{
+				generator->next(left, right, speed);
+				return;
+			}
+
+			float l=0,r=0;
+			modulator->next(l, r);	// nbre entre -1 et 1
+
+			l = (l+r)/2.0;
+			l = min + (max-min)*(l+1.0)/2.0;
+
+			generator->next(left, right, l);
+		}
+		
+	protected:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new FmGenerator(in); }
+
+	private:
+		float min;
+		float max;
+		float a;
+		SoundGenerator* generator;
+		SoundGenerator* modulator;
+		float last_ech_left;
+		float last_ech_right;
+};
+
+class MixerGenerator : public SoundGenerator
+{
+	public:
+		MixerGenerator() : SoundGenerator("{"){};
+
+		MixerGenerator(istream& in)
+		{
+			while (in.good())
+			{
+				SoundGenerator* p=SoundGenerator::factory(in);
+				if (p)
+					generators.push_front(p);
+				else
+					break;
+			}
+
+			if (SoundGenerator::last_type != "}")
+			{
+				cerr << "Missing } at end of mixer generator" << endl;
+				exit(1);
+			}
+			cout << "Mixer size : " << generators.size() << endl;
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			if (generators.size()==0)
+				return;
+
+			float l=0;
+			float r=0;
+
+			for(auto generator: generators)
+				generator->next(l, r, speed);
+
+			left += l / generators.size();
+			right += r / generators.size();
+		}
+
+	protected:
+		virtual SoundGenerator* build(istream &in) const
+		{ return new MixerGenerator(in); }
+	
+	private:
+		list<SoundGenerator*>	generators;
+
+};
+
 class AmGenerator : public SoundGenerator
 {
 	public:
 		AmGenerator() : SoundGenerator("am"){};	// for the factory
 
-		AmGenerator(istream& in)
+		AmGenerator(istream &in)
 		{
 			in >> min;
 			in >> max;
@@ -289,13 +398,13 @@ class AmGenerator : public SoundGenerator
 			min /= 100.0;
 		}
 
-		virtual void next(float &left, float &right)
+		virtual void next(float &left, float &right, float speed=1.0)
 		{
 			float l=0,r=0;
-			generator->next(l, r);
+			generator->next(l, r, speed);
 
 			float lv=0,rv=0;
-			modulator->next(lv, rv);
+			modulator->next(lv, rv, speed);
 
 			lv = min + (max-min)*(lv+1)/2;
 			rv = min + (max-min)*(rv+1)/2;
@@ -319,11 +428,12 @@ SoundGenerator* SoundGenerator::factory(istream& in)
 {
 	string type;
 	in >> type;
+	cout << "GENERATOR TYPE " << type << endl;
 	auto it = generators.find(type);
 	if (it == generators.end())
 	{
-		cerr << "Unknown generator : (" << type << ')' << endl;
-		exit(1);
+		last_type = type;
+		return 0;
 	}
 	return it->second->build(in);
 }
@@ -331,6 +441,7 @@ SoundGenerator* SoundGenerator::factory(istream& in)
 list<SoundGenerator*>	list_generator;
 
 void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
+	cout << '.';
 	if (list_generator.size()==0)
 		return;
 	int ech = byteStreamLength / sizeof(int16_t);
@@ -355,7 +466,7 @@ void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
 void help()
 {
 	cout << "Syntax : " << endl;
-	cout << "  gen [duration] generator_1 [generator_2 [...]]" << endl;
+	cout << "  gen [duration] [sample_freq] generator_1 [generator_2 [...]]" << endl;
 	cout << endl;
 	cout << "  duration     : sound duration (ms)" << endl;
 	cout << "  generator is : type freq[:vol]" << endl;
@@ -371,6 +482,8 @@ static TriangleGenerator gen_tr;
 static SinusGenerator gen_si;
 static AmGenerator gen_am;
 static DistortionGenerator gen_dist;
+static FmGenerator gen_fm;
+static MixerGenerator gn_mix;
 
 int main(int argc, const char* argv[])
 {
@@ -383,6 +496,12 @@ int main(int argc, const char* argv[])
 	duration = atol(argv[i]);
 	if (duration == 0)
 		duration=10000;
+	else
+		i++;
+
+	ech = atol(argv[i]);
+	if (ech==0)
+		ech=48000;
 	else
 		i++;
 
@@ -411,7 +530,7 @@ int main(int argc, const char* argv[])
 	SDL_AudioDeviceID dev;
 
 	SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
-	want.freq = ECH;
+	want.freq = ech;
 	want.format = AUDIO_S16SYS;
 	want.channels = 2;
 	want.samples = BUF_LENGTH;
@@ -424,6 +543,7 @@ int main(int argc, const char* argv[])
 		if (have.format != want.format) { /* we let this one thing change. */
 			SDL_Log("We didn't get Float32 audio format.");
 		}
+		cout << "ECH = " << have.freq << " duration=" << duration << endl;
 		SDL_PauseAudioDevice(dev, 0); /* start audio playing. */
 		SDL_Delay(duration); // Play for ms
 		SDL_CloseAudioDevice(dev);
