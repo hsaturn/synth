@@ -18,6 +18,10 @@ class SoundGenerator
 {
 	public:
 		virtual ~SoundGenerator() {};
+
+		// Next sample to add to left and right
+		// added value should be from -1 to 1
+		// speed = samples/sec modifier
 		virtual void next(float &left, float &right, float speed=1.0) = 0;
 
 		static SoundGenerator* factory(istream& in);
@@ -27,6 +31,11 @@ class SoundGenerator
 			for(auto it: generators)
 				s+= it.first+' ';
 			return s;
+		}
+
+		static float rand()
+		{
+			return (float)::rand() / ((float)RAND_MAX/2) -1.0;
 		}
 	
 	protected:
@@ -78,6 +87,7 @@ class SoundGenerator
 				exit(1);
 			}
 		};
+
 		virtual SoundGenerator* build(istream& in) const=0;
 
 		float volume;
@@ -92,6 +102,27 @@ class SoundGenerator
 
 string SoundGenerator::last_type;
 map<string, const SoundGenerator*> SoundGenerator::generators;
+
+class WhiteNoiseGenerator : public SoundGenerator
+{
+	public:
+		WhiteNoiseGenerator() : SoundGenerator("wnoise"){}	// factory
+
+		WhiteNoiseGenerator(istream& in)
+		{
+		};
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			left += SoundGenerator::rand();
+			right += SoundGenerator::rand();
+		}
+
+	protected:
+		virtual SoundGenerator* build(istream &in) const
+		{ return new WhiteNoiseGenerator(in); }
+
+};
 
 class TriangleGenerator : public SoundGenerator
 {
@@ -440,8 +471,31 @@ SoundGenerator* SoundGenerator::factory(istream& in)
 
 list<SoundGenerator*>	list_generator;
 
+void help()
+{
+	cout << "Syntax : " << endl;
+	cout << "  gen [duration] [sample_freq] generator_1 [generator_2 [...]]" << endl;
+	cout << endl;
+	cout << "  duration     : sound duration (ms)" << endl;
+	cout << "  generator is : type freq[:vol]" << endl;
+	cout << "  type = " << SoundGenerator::getTypes() << endl;
+	cout << "  vol  = 0..100 (percent)" << endl;
+	cout << endl;
+	exit(1);
+}
+
+// Auto register for the factory
+static SquareGenerator gen_sq;
+static TriangleGenerator gen_tr;
+static SinusGenerator gen_si;
+static AmGenerator gen_am;
+static DistortionGenerator gen_dist;
+static FmGenerator gen_fm;
+static MixerGenerator gen_mix;
+static WhiteNoiseGenerator gen_wn;
+
+
 void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
-	cout << '.';
 	if (list_generator.size()==0)
 		return;
 	int ech = byteStreamLength / sizeof(int16_t);
@@ -463,28 +517,6 @@ void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
 
 }
 
-void help()
-{
-	cout << "Syntax : " << endl;
-	cout << "  gen [duration] [sample_freq] generator_1 [generator_2 [...]]" << endl;
-	cout << endl;
-	cout << "  duration     : sound duration (ms)" << endl;
-	cout << "  generator is : type freq[:vol]" << endl;
-	cout << "  type = " << SoundGenerator::getTypes() << endl;
-	cout << "  vol  = 0..100 (percent)" << endl;
-	cout << endl;
-	exit(1);
-}
-
-// Auto register for the factory
-static SquareGenerator gen_sq;
-static TriangleGenerator gen_tr;
-static SinusGenerator gen_si;
-static AmGenerator gen_am;
-static DistortionGenerator gen_dist;
-static FmGenerator gen_fm;
-static MixerGenerator gn_mix;
-
 int main(int argc, const char* argv[])
 {
 	long duration;
@@ -493,6 +525,7 @@ int main(int argc, const char* argv[])
 
 	if (argc<2)
 		help();
+
 	duration = atol(argv[i]);
 	if (duration == 0)
 		duration=10000;
@@ -509,7 +542,7 @@ int main(int argc, const char* argv[])
 	{
 		if ((string)argv[i]=="help" || (string)argv[i]=="-h")
 			help();
-		input << ' ' << argv[i];
+		input << argv[i] << ' ';
 	}
 
 	string arg;
