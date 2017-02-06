@@ -19,7 +19,7 @@ Changing am from square to sinus
 
 > synth 1000 am 0 100 sinus 220 sinus 5
 
-# Mixing two signals, triangle @440Hz 50% volume and sinus 330Hz for 1sec
+Mixing two signals, triangle @440Hz 50% volume and sinus 330Hz for 1sec
 
 > synth 1000 tri 440:50 sinus 330
 
