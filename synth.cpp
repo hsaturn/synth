@@ -11,7 +11,8 @@
 
 using namespace std;
 
-int ech = 48000;
+uint32_t ech = 48000;
+
 const int BUF_LENGTH = 8192;
 
 class SoundGenerator
@@ -498,11 +499,11 @@ static WhiteNoiseGenerator gen_wn;
 void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
 	if (list_generator.size()==0)
 		return;
-	int ech = byteStreamLength / sizeof(int16_t);
+	uint32_t ech = byteStreamLength / sizeof(int16_t);
 	int16_t* stream =  reinterpret_cast<int16_t*>( byteStream );
-	Uint32 i;
+	uint32_t i;
 
-	for (i = 0; i < ech; i)
+	for (i = 0; i < ech; i+=2)
 	{
 		float left = 0;
 		float right = 0;
@@ -511,8 +512,6 @@ void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
 
 		stream[i] = 32767 * left / list_generator.size();
 		stream[i+1] = 32767 * right / list_generator.size();
-
-		i+=2;
 	}
 
 }
