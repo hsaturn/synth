@@ -7,7 +7,9 @@
 #include <string.h>
 #include <list>
 #include <sstream>
+#include <fstream>
 #include <map>
+#include <vector>
 
 using namespace std;
 
@@ -37,6 +39,19 @@ class SoundGenerator
 		static float rand()
 		{
 			return (float)::rand() / ((float)RAND_MAX/2) -1.0;
+		}
+
+		static void help()
+		{
+			map<const SoundGenerator*, bool>	done;
+			for(auto generator : generators)
+			{
+				if (done.find(generator.second)==done.end())
+				{
+					done[generator.second] = true;
+					generator.second->help(cout);
+				}
+			}
 		}
 	
 	protected:
@@ -90,6 +105,10 @@ class SoundGenerator
 		};
 
 		virtual SoundGenerator* build(istream& in) const=0;
+		virtual void help(ostream& out) const
+		{
+			out << "freq[:volume]";
+		}
 
 		float volume;
 		float freq;
@@ -123,6 +142,11 @@ class WhiteNoiseGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream &in) const
 		{ return new WhiteNoiseGenerator(in); }
 
+		virtual void help(ostream& out) const
+		{
+			out << "wnoise" << endl;
+		}
+
 };
 
 class TriangleGenerator : public SoundGenerator
@@ -145,6 +169,7 @@ class TriangleGenerator : public SoundGenerator
 			a += da * speed * (float)sign;
 			float dv=a;
 			if (dv>1)
+
 			{
 				sign = -sign;
 				dv=1;
@@ -161,6 +186,13 @@ class TriangleGenerator : public SoundGenerator
 	protected:
 		virtual SoundGenerator* build(istream& in) const
 		{ return new TriangleGenerator(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "triangle ";
+			SoundGenerator::help(out);
+			out << endl;
+		}
 
 	private:
 		float a;
@@ -198,6 +230,13 @@ class SquareGenerator : public SoundGenerator
 	protected:
 		virtual SoundGenerator* build(istream& in) const
 		{ return new SquareGenerator(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "square ";
+			SoundGenerator::help(out);
+			out << endl;
+		}
 
 	private:
 		float a;
@@ -238,6 +277,13 @@ class SinusGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new SinusGenerator(in); }
 
+		virtual void help(ostream& out) const
+		{
+			out << "sinus ";
+			SoundGenerator::help(out);
+			out << endl;
+		}
+
 	private:
 		float a;
 		float da;
@@ -254,9 +300,7 @@ class DistortionGenerator : public SoundGenerator
 			if (in.good()) generator = SoundGenerator::factory(in);
 			if (level<0 || level>100 || generator == 0)
 			{
-				cerr << "distorsion syntax: distorsion leve250Gl generator" << endl;
-				cerr << "level = 0..100, generator= sound generator" << endl;
-				cerr << "example: distorsion 50 sinus 200" << endl;
+				this->help(cerr);
 				exit(1);
 			}
 
@@ -283,6 +327,13 @@ class DistortionGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new DistortionGenerator(in); }
 
+		virtual void help(ostream& out) const
+		{
+			out << "distorsion level generator" << endl;
+			out << "  level = 0..100, ";
+			out << "  example: distorsion 50 sinus 200" << endl;
+		}
+
 	private:
 		float level;
 		SoundGenerator* generator;
@@ -304,15 +355,7 @@ class FmGenerator : public SoundGenerator
 
 			if (min<0 || min>200 || max<0 || max>200 || modulator == 0 || generator == 0 || max<min)
 			{
-				cerr << "fm generator syntax is :" << endl;
-				cerr << "  fm min max {sound_generator} {sound_modulator}" << endl;
-				cerr << "  min : minimum frequency shifting level" << endl;
-				cerr << "  max : max frequency shifting (0..200)" << endl;
-				cerr << "  sound_generator : a sound generator (as usual)" << endl;
-				cerr << "  sound_modulator : the frequency modulator (another sound generator)" << endl;
-				cerr << "  ex: fm 80 120 sq 220 sin 10 : 220Hz square modulated with sinus" << endl;
-				cerr << endl;
-				cerr << "yet defined values where min:" << min << " max:" << max << " generator:" << generator << " modulator:" << modulator << endl;
+				this->help(cerr);
 				exit(1);
 			}
 
@@ -340,6 +383,17 @@ class FmGenerator : public SoundGenerator
 	protected:
 		virtual SoundGenerator* build(istream& in) const
 		{ return new FmGenerator(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "fm min max {sound_generator} {sound_modulator}" << endl;
+			out << "  min : minimum frequency shifting level" << endl;
+			out << "  max : max frequency shifting (0..200)" << endl;
+			out << "  sound_generator : a sound generator (as usual)" << endl;
+			out << "  sound_modulator : the frequency modulator (another sound generator)" << endl;
+			out << "  ex: fm 80 120 sq 220 sin 10 : 220Hz square modulated with sinus" << endl;
+			out << endl;
+		}
 
 	private:
 		float min;
@@ -393,10 +447,144 @@ class MixerGenerator : public SoundGenerator
 	protected:
 		virtual SoundGenerator* build(istream &in) const
 		{ return new MixerGenerator(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "{ generator [generator ...] }" << endl;
+		}
 	
 	private:
 		list<SoundGenerator*>	generators;
 
+};
+
+class EnvelopeSound : public SoundGenerator
+{
+	public:
+		EnvelopeSound() : SoundGenerator("envelope") {}
+
+		EnvelopeSound(istream &in)
+		{
+			int ms;
+			index = 0;
+
+			in >> ms;
+
+			if (ms<=0)
+			{
+				cerr << "Null duration" << endl;
+				exit(1);
+			}
+
+			istream* input = 0;
+			ifstream file;
+
+			string type;
+			in >> type;
+
+			loop=true;
+			if (type=="once")
+			{
+				loop=false;
+				in >> type;
+			}
+			else if (type=="loop")
+			{
+				in >> type;
+			}
+
+
+			if (type=="data")
+				input = &in;
+			else if (type=="file")
+			{
+				string name;
+				in >> name;
+				file.open(name);
+			}
+			else
+				cerr << "Unkown type: " << type << endl;
+			if (input == 0)
+			{
+				this->help(cerr);
+				exit(1);
+			}
+			float v;
+			while(input->good())
+			{
+				string s;
+				(*input) >> s;
+				if (s=="end")
+					break;
+				v = atof(s.c_str())/100.0;
+
+				if (v>200) v=200;
+
+				data.push_back(v);
+			}
+			cout << "data ";
+			for(auto v: data)
+				cout << v << ' ';
+			generator = SoundGenerator::factory(in);
+			if (generator == 0)
+			{
+				cerr << "Missing generator" << endl;
+				exit(1);
+			}
+
+			dindex =  1000.0 * (data.size()-1) / (float)ms / ech;
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			if (index>data.size())
+				return;
+
+			float l;
+			float r;
+			generator->next(l,r,speed);
+
+			index += dindex;
+
+			int idx=(int)index;
+			float dec = index-idx;
+
+			if (idx<0) idx=0;
+			if (index>=(float)data.size()-1)
+			{
+				idx = data.size()-1;
+				if (loop)
+					index -= (float)data.size()-1;
+			}
+			float cur = data[idx];
+			if (idx+1 < (int) data.size())
+				idx++;
+			float next = data[idx];
+
+			float f = cur + (next-cur)*dec;
+
+			left += l*f;
+			right += r*f;
+		}
+
+	protected:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new EnvelopeSound(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "envelope {timems} [once|loop] {data} generator" << endl;
+			out << "  data is either : file filename, or data v1 ... v2 end" << endl;
+			out << "  values are from 0 to 200 (float, >100 may distort sound)" << endl;
+		}
+
+	private:
+		bool loop;
+		float index;
+		float dindex;
+
+		vector<float>	data;
+		SoundGenerator* generator;
 };
 
 class AmGenerator : public SoundGenerator
@@ -414,15 +602,7 @@ class AmGenerator : public SoundGenerator
 
 			if (min<0 || min>100 || max<0 || max>100 || modulator == 0 || generator == 0)
 			{
-				cerr << "am generator syntax is :" << endl;
-				cerr << "  am min max {sound_generator} {sound_modulator}" << endl;
-				cerr << "  min : minimum sound level" << endl;
-				cerr << "  max : max sound level (0..100)" << endl;
-				cerr << "  sound_generator : a sound generator (as usual)" << endl;
-				cerr << "  sound_modulator : the amplitude modulator (another sound generator)" << endl;
-				cerr << "  ex: am 0 100 sq 220 sin 10 : 220Hz square modulated with sinus" << endl;
-				cerr << endl;
-				cerr << "yet defined values where min:" << min << " max:" << max << " generator:" << generator << " modulator:" << modulator << endl;
+				this->help(cerr);
 				exit(1);
 			}
 
@@ -448,6 +628,17 @@ class AmGenerator : public SoundGenerator
 	protected:
 		virtual SoundGenerator* build(istream& in) const
 		{ return new AmGenerator(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "am min max {sound_generator} {sound_modulator}" << endl;
+			out << "  min : minimum sound level" << endl;
+			out << "  max : max sound level (0..100)" << endl;
+			out << "  sound_generator : a sound generator (as usual)" << endl;
+			out << "  sound_modulator : the amplitude modulator (another sound generator)" << endl;
+			out << "  ex: am 0 100 sq 220 sin 10 : 220Hz square modulated with sinus" << endl;
+			out << endl;
+		}
 
 	private:
 		float min;
@@ -475,13 +666,14 @@ list<SoundGenerator*>	list_generator;
 void help()
 {
 	cout << "Syntax : " << endl;
-	cout << "  gen [duration] [sample_freq] generator_1 [generator_2 [...]]" << endl;
+	cout << "  synth [duration] [sample_freq] generator_1 [generator_2 [...]]" << endl;
 	cout << endl;
 	cout << "  duration     : sound duration (ms)" << endl;
-	cout << "  generator is : type freq[:vol]" << endl;
-	cout << "  type = " << SoundGenerator::getTypes() << endl;
-	cout << "  vol  = 0..100 (percent)" << endl;
 	cout << endl;
+	cout << "Available sound generators : " << endl;
+
+	SoundGenerator::help();
+
 	exit(1);
 }
 
@@ -494,6 +686,7 @@ static DistortionGenerator gen_dist;
 static FmGenerator gen_fm;
 static MixerGenerator gen_mix;
 static WhiteNoiseGenerator gen_wn;
+static EnvelopeSound gen_env;
 
 
 void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
