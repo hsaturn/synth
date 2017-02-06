@@ -13,8 +13,15 @@ sinus
 square
 triangle
 distorsion
+white noise
+
 frequency modulation (any signal)
 amplitude modulation (any signal)
+custom envelope (from file also)
+
+left/right cut channel
+
+group of generator
 
 # examples
 

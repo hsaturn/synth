@@ -27,7 +27,7 @@ class SoundGenerator
 		// speed = samples/sec modifier
 		virtual void next(float &left, float &right, float speed=1.0) = 0;
 
-		static SoundGenerator* factory(istream& in);
+		static SoundGenerator* factory(istream& in, bool needed=false);
 		static string getTypes()
 		{
 			string s;
@@ -297,8 +297,8 @@ class DistortionGenerator : public SoundGenerator
 		DistortionGenerator(istream& in)
 		{
 			in >> level;
-			if (in.good()) generator = SoundGenerator::factory(in);
-			if (level<0 || level>100 || generator == 0)
+			if (in.good()) generator = SoundGenerator::factory(in, true);
+			if (level<0 || level>100)
 			{
 				this->help(cerr);
 				exit(1);
@@ -350,10 +350,10 @@ class FmGenerator : public SoundGenerator
 			in >> min;
 			in >> max;
 
-			if (in.good()) generator = SoundGenerator::factory(in);
-			if (in.good()) modulator = SoundGenerator::factory(in);
+			if (in.good()) generator = SoundGenerator::factory(in, true);
+			if (in.good()) modulator = SoundGenerator::factory(in, true);
 
-			if (min<0 || min>200 || max<0 || max>200 || modulator == 0 || generator == 0 || max<min)
+			if (min<0 || min>200 || max<0 || max>200 || max<min)
 			{
 				this->help(cerr);
 				exit(1);
@@ -458,10 +458,68 @@ class MixerGenerator : public SoundGenerator
 
 };
 
+class LeftSound : public SoundGenerator
+{
+	public:
+		LeftSound() : SoundGenerator("left") {}
+
+		LeftSound(istream& in)
+		{
+			generator = SoundGenerator::factory(in, true);
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			float v;
+			generator->next(left, v);
+		}
+
+	protected:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new LeftSound(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "left generator : keep only the left channel" << endl;
+		}
+
+	private:
+		SoundGenerator* generator;
+};
+
+class RightSound : public SoundGenerator
+{
+	public:
+		RightSound() : SoundGenerator("right") {}
+
+		RightSound(istream& in)
+		{
+			generator = SoundGenerator::factory(in, true);
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			float v;
+			generator->next(v, right);
+		}
+
+	protected:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new RightSound(in); }
+
+		virtual void help(ostream& out) const
+		{
+			out << "right generator : keep only the right channel" << endl;
+		}
+
+	private:
+		SoundGenerator* generator;
+};
+
 class EnvelopeSound : public SoundGenerator
 {
 	public:
-		EnvelopeSound() : SoundGenerator("envelope") {}
+		EnvelopeSound() : SoundGenerator("envelope env") {}
 
 		EnvelopeSound(istream &in)
 		{
@@ -501,6 +559,8 @@ class EnvelopeSound : public SoundGenerator
 				string name;
 				in >> name;
 				file.open(name);
+				input = &file;
+				cout << "From file " << name << endl;
 			}
 			else
 				cerr << "Unkown type: " << type << endl;
@@ -514,10 +574,13 @@ class EnvelopeSound : public SoundGenerator
 			{
 				string s;
 				(*input) >> s;
+				if (s.length()==0)
+					break;
 				if (s=="end")
 					break;
 				v = atof(s.c_str())/100.0;
 
+				if (v<200) v=-200;
 				if (v>200) v=200;
 
 				data.push_back(v);
@@ -525,12 +588,7 @@ class EnvelopeSound : public SoundGenerator
 			cout << "data ";
 			for(auto v: data)
 				cout << v << ' ';
-			generator = SoundGenerator::factory(in);
-			if (generator == 0)
-			{
-				cerr << "Missing generator" << endl;
-				exit(1);
-			}
+			generator = SoundGenerator::factory(in, true);
 
 			dindex =  1000.0 * (data.size()-1) / (float)ms / ech;
 		}
@@ -575,7 +633,7 @@ class EnvelopeSound : public SoundGenerator
 		{
 			out << "envelope {timems} [once|loop] {data} generator" << endl;
 			out << "  data is either : file filename, or data v1 ... v2 end" << endl;
-			out << "  values are from 0 to 200 (float, >100 may distort sound)" << endl;
+			out << "  values are from -200 to 200 (float, >100 may distort sound)" << endl;
 		}
 
 	private:
@@ -597,10 +655,10 @@ class AmGenerator : public SoundGenerator
 			in >> min;
 			in >> max;
 
-			if (in.good()) generator = SoundGenerator::factory(in);
-			if (in.good()) modulator = SoundGenerator::factory(in);
+			if (in.good()) generator = SoundGenerator::factory(in, true);
+			if (in.good()) modulator = SoundGenerator::factory(in, true);
 
-			if (min<0 || min>100 || max<0 || max>100 || modulator == 0 || generator == 0)
+			if (min<0 || min>100 || max<0 || max>100)
 			{
 				this->help(cerr);
 				exit(1);
@@ -647,7 +705,7 @@ class AmGenerator : public SoundGenerator
 		SoundGenerator* modulator;
 };
 
-SoundGenerator* SoundGenerator::factory(istream& in)
+SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 {
 	string type;
 	in >> type;
@@ -655,6 +713,11 @@ SoundGenerator* SoundGenerator::factory(istream& in)
 	auto it = generators.find(type);
 	if (it == generators.end())
 	{
+		if (needed)
+		{
+			cerr << "Missing generator" << endl;
+			exit(1);
+		}
 		last_type = type;
 		return 0;
 	}
@@ -687,6 +750,8 @@ static FmGenerator gen_fm;
 static MixerGenerator gen_mix;
 static WhiteNoiseGenerator gen_wn;
 static EnvelopeSound gen_env;
+static LeftSound gen_left;
+static RightSound gen_right;
 
 
 void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
