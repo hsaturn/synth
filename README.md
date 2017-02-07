@@ -139,7 +139,7 @@ Mixing two signals, triangle @440Hz 50% volume and sinus 330Hz for 1sec
 
  > synth 1000 tri 440:50 sinus 330
 
-... Hum how to define that ???
+... Hum how to define that ??? 
 
  > synth 1000000 am 0 100 fm 80 120 sq 440:25 tri 1 square 5 am 0 100 fm 80 120 sq 330:25 tri 1 square 6 fm 80 120 sinus 1200:30 sinus 3
  
