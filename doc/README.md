@@ -12,12 +12,13 @@ There is no limit
 
 syntax:
 
-	adsr ms:vol ms:vol .... last generator
+	adsr ms:vol ms:vol .... type generator
 
 	By default, 0:0 is the first implicit value.
 
 	ms is a time (millisecond)
 	vol is the volume reached at that time.
+	type is either once or loop
 
 Example
 
