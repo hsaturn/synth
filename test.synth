@@ -1,0 +1,29 @@
+print Kind of engine
+
+define engine
+{
+	reverb 30:30
+		fm 0 100
+			am 0 100
+				square 39:40
+				triangle 100
+			adsr
+				1:0 1000:0 2000:100 3001:400 6000:400 8000:0 9000:0 loop
+				level 1
+}
+
+define ambiant
+{
+	right
+		am 0 100
+			sinus 440:35
+			sinus 1
+	left
+		am 100 0
+			sinus 440:34
+			sinus 1
+}
+
+# now play ambiant sound mixed with engine
+{ ambiant engine }
+
