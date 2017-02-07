@@ -10,6 +10,8 @@
 #include <fstream>
 #include <map>
 #include <vector>
+#include <chrono>
+#include <atomic>
 
 using namespace std;
 
@@ -54,6 +56,19 @@ class SoundGenerator
 			}
 		}
 	
+		static string last_type;
+
+		static void missingGeneratorExit(string msg="")
+		{
+			if (last_type.length())
+				cerr << "Unknown generator type (" << last_type << ")" << endl;
+			else
+				cerr << "Missing generator" << endl;
+			if (msg.length())
+				cerr << msg;
+			exit(1);
+		}
+
 	protected:
 		SoundGenerator() {};
 
@@ -113,15 +128,54 @@ class SoundGenerator
 		float volume;
 		float freq;
 
-		static string last_type;
 	private:
 		static map<string, const SoundGenerator*> generators;
+		static map<string, string> defines;
+		static bool echo;
 
 		// For the factory
 };
 
 string SoundGenerator::last_type;
 map<string, const SoundGenerator*> SoundGenerator::generators;
+map<string, string> SoundGenerator::defines;
+bool SoundGenerator::echo=true;
+
+template<class T>
+class SoundGeneratorVarHook : public SoundGenerator
+{
+	public:
+		SoundGeneratorVarHook(atomic<T>* v, T min, T max, string name)
+		:
+		mref(v),
+		mmin(min),
+		mmax(max),
+		SoundGenerator(name){}
+
+		SoundGeneratorVarHook(istream &in, atomic<T>* v, T min, T max)
+		:
+		mref(v), mmin(min), mmax(max) {}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			float delta = (float)(*mref - mmin)/(float)(mmax-mmin);
+
+			left += delta;
+			right += delta;
+		}
+
+		virtual void help(ostream &out) const
+		{ out << "Help not define (SoundGeneratorVarHook)" << endl; }
+
+	protected:
+		virtual SoundGenerator* build(istream &in) const
+		{ return new SoundGeneratorVarHook<T>(in, mref,mmin, mmax); }
+
+	private:
+		atomic<T>* mref;
+		T mmin;
+		T mmax;
+};
 
 class WhiteNoiseGenerator : public SoundGenerator
 {
@@ -161,7 +215,6 @@ class TriangleGenerator : public SoundGenerator
 			a = 0;
 			da = 4 / ((float)ech / freq);
 			sign = 1;
-			cout << "TRIANGLE FREQUENCY : " << freq << ' ' << da << endl;
 		}
 
 		virtual void next(float &left, float &right, float speed=1.0)
@@ -255,7 +308,6 @@ class SinusGenerator : public SoundGenerator
 		{
 			a = 0;
 			da = (2 * M_PI * freq) / (float)ech;
-			cout << "SINUS FREQUENCY : " << freq << endl;
 		}
 
 		virtual void next(float &left, float &right, float speed=1.0)
@@ -297,7 +349,7 @@ class DistortionGenerator : public SoundGenerator
 		DistortionGenerator(istream& in)
 		{
 			in >> level;
-			if (in.good()) generator = SoundGenerator::factory(in, true);
+			if (in.good()) generator = factory(in, true);
 			if (level<0 || level>100)
 			{
 				this->help(cerr);
@@ -339,6 +391,33 @@ class DistortionGenerator : public SoundGenerator
 		SoundGenerator* generator;
 };
 
+class LevelSound : public SoundGenerator
+{
+	public:
+		LevelSound() : SoundGenerator("level"){}
+
+		LevelSound(istream &in)
+		{
+			in >> level;
+		}
+
+		virtual void next(float &left, float &right, float speed=0.1)
+		{
+			left += level;
+			right += level;
+		}
+
+		virtual void help(ostream &out) const
+		{ out << "level value : constant level" << endl; }
+
+	protected:
+		virtual SoundGenerator* build(istream &in) const
+		{ return new LevelSound(in); }
+
+	private:
+		float level;
+};
+
 class FmGenerator : public SoundGenerator
 {
 	public:
@@ -349,11 +428,36 @@ class FmGenerator : public SoundGenerator
 			a = 0;
 			in >> min;
 			in >> max;
+			mod_gen = true;
+			mod_mod = false;
 
-			if (in.good()) generator = SoundGenerator::factory(in, true);
-			if (in.good()) modulator = SoundGenerator::factory(in, true);
+			generator = factory(in);
 
-			if (min<0 || min>200 || max<0 || max>200 || max<min)
+			if (generator == 0)
+			{
+				if (last_type=="generator")
+				{
+					mod_gen = true;
+					mod_mod = false;
+				}
+				else if (last_type=="modulator")
+				{
+					mod_gen = false;
+					mod_mod = true;
+				}
+				else if (last_type=="both")
+				{
+					mod_gen = true;
+					mod_mod = true;
+				}
+				else
+					missingGeneratorExit("417");
+			}
+
+			if (generator == 0) generator = factory(in, true);
+			modulator = factory(in, true);
+
+			if (min<0 || min>2000 || max<0 || max>2000 || max<min)
 			{
 				this->help(cerr);
 				exit(1);
@@ -367,16 +471,17 @@ class FmGenerator : public SoundGenerator
 		{
 			if (min == max)
 			{
-				generator->next(left, right, speed);
+				generator->next(left, right, mod_gen ? speed : 1.0);
 				return;
 			}
 
 			float l=0,r=0;
-			modulator->next(l, r);	// nbre entre -1 et 1
+			modulator->next(l, r, mod_mod ? speed : 1.0);	// nbre entre -1 et 1
 
 			l = (l+r)/2.0;
 			l = min + (max-min)*(l+1.0)/2.0;
 
+			if (mod_gen) l *= speed;
 			generator->next(left, right, l);
 		}
 		
@@ -386,9 +491,10 @@ class FmGenerator : public SoundGenerator
 
 		virtual void help(ostream& out) const
 		{
-			out << "fm min max {sound_generator} {sound_modulator}" << endl;
+			out << "fm min max [speed_modifier] {sound_generator} {sound_modulator}" << endl;
 			out << "  min : minimum frequency shifting level" << endl;
-			out << "  max : max frequency shifting (0..200)" << endl;
+			out << "  max : max frequency shifting (0..2000)" << endl;
+			out << "  speed_modifier  : where to apply a speed modification (generator/modulator/both) " << endl;
 			out << "  sound_generator : a sound generator (as usual)" << endl;
 			out << "  sound_modulator : the frequency modulator (another sound generator)" << endl;
 			out << "  ex: fm 80 120 sq 220 sin 10 : 220Hz square modulated with sinus" << endl;
@@ -403,6 +509,8 @@ class FmGenerator : public SoundGenerator
 		SoundGenerator* modulator;
 		float last_ech_left;
 		float last_ech_right;
+		bool mod_gen;
+		bool mod_mod;
 };
 
 class MixerGenerator : public SoundGenerator
@@ -414,7 +522,7 @@ class MixerGenerator : public SoundGenerator
 		{
 			while (in.good())
 			{
-				SoundGenerator* p=SoundGenerator::factory(in);
+				SoundGenerator* p=factory(in);
 				if (p)
 					generators.push_front(p);
 				else
@@ -426,13 +534,17 @@ class MixerGenerator : public SoundGenerator
 				cerr << "Missing } at end of mixer generator" << endl;
 				exit(1);
 			}
-			cout << "Mixer size : " << generators.size() << endl;
 		}
 
 		virtual void next(float &left, float &right, float speed=1.0)
 		{
 			if (generators.size()==0)
 				return;
+			else if (generators.size()==1)
+			{
+				generators.front()->next(left, right, speed);
+				return;
+			}
 
 			float l=0;
 			float r=0;
@@ -465,12 +577,12 @@ class LeftSound : public SoundGenerator
 
 		LeftSound(istream& in)
 		{
-			generator = SoundGenerator::factory(in, true);
+			generator = factory(in, true);
 		}
 
 		virtual void next(float &left, float &right, float speed=1.0)
 		{
-			float v;
+			float v=0;
 			generator->next(left, v);
 		}
 
@@ -494,12 +606,12 @@ class RightSound : public SoundGenerator
 
 		RightSound(istream& in)
 		{
-			generator = SoundGenerator::factory(in, true);
+			generator = factory(in, true);
 		}
 
 		virtual void next(float &left, float &right, float speed=1.0)
 		{
-			float v;
+			float v=0;
 			generator->next(v, right);
 		}
 
@@ -560,7 +672,6 @@ class EnvelopeSound : public SoundGenerator
 				in >> name;
 				file.open(name);
 				input = &file;
-				cout << "From file " << name << endl;
 			}
 			else
 				cerr << "Unkown type: " << type << endl;
@@ -580,15 +691,12 @@ class EnvelopeSound : public SoundGenerator
 					break;
 				v = atof(s.c_str())/100.0;
 
-				if (v<200) v=-200;
+				if (v<-200) v=-200;
 				if (v>200) v=200;
 
 				data.push_back(v);
 			}
-			cout << "data ";
-			for(auto v: data)
-				cout << v << ' ';
-			generator = SoundGenerator::factory(in, true);
+			generator = factory(in, true);
 
 			dindex =  1000.0 * (data.size()-1) / (float)ms / ech;
 		}
@@ -598,8 +706,8 @@ class EnvelopeSound : public SoundGenerator
 			if (index>data.size())
 				return;
 
-			float l;
-			float r;
+			float l=0;
+			float r=0;
 			generator->next(l,r,speed);
 
 			index += dindex;
@@ -645,6 +753,39 @@ class EnvelopeSound : public SoundGenerator
 		SoundGenerator* generator;
 };
 
+class MonoGenerator : public SoundGenerator
+{
+	public:
+		MonoGenerator() : SoundGenerator("mono") {}
+
+		MonoGenerator(istream &in)
+		{
+			generator = factory(in, true);
+		}
+
+		virtual void next(float &left, float &right, float speed = 1.0)
+		{
+			float l=0;
+			float v=0;
+			generator->next(l,v,speed);
+			l = (l+v)/2;
+			left +=l;
+			right +=l;
+		}
+
+		virtual void help(ostream& out) const
+		{
+			out << "mono generator : convert output of generator to monophonic output" << endl;
+		}
+
+	protected:
+		virtual SoundGenerator* build(istream &in) const
+		{ return new MonoGenerator(in); }
+
+	private:
+		SoundGenerator* generator;
+};
+
 class AmGenerator : public SoundGenerator
 {
 	public:
@@ -655,12 +796,12 @@ class AmGenerator : public SoundGenerator
 			in >> min;
 			in >> max;
 
-			if (in.good()) generator = SoundGenerator::factory(in, true);
-			if (in.good()) modulator = SoundGenerator::factory(in, true);
+			if (in.good()) generator = factory(in, true);
+			if (in.good()) modulator = factory(in, true);
 
 			if (min<0 || min>100 || max<0 || max>100)
 			{
-				this->help(cerr);
+				cerr << "Out of range (0..100)" << endl;
 				exit(1);
 			}
 
@@ -680,7 +821,7 @@ class AmGenerator : public SoundGenerator
 			rv = min + (max-min)*(rv+1)/2;
 
 			left += lv*l;
-			right += lv*r;
+			right += rv*r;
 		}
 
 	protected:
@@ -705,23 +846,360 @@ class AmGenerator : public SoundGenerator
 		SoundGenerator* modulator;
 };
 
+class ReverbGenerator : public SoundGenerator
+{
+	public:
+		ReverbGenerator() : SoundGenerator("reverb echo") {}
+
+		ReverbGenerator(istream& in)
+		{
+			echo = (SoundGenerator::last_type=="echo");
+
+			string s;
+
+			in >> s;
+			if (s.find(':')==string::npos)
+			{
+				cerr << "Missing :  in " << SoundGenerator::last_type << " generator." << endl;
+				exit(1);
+			}
+			float ms = atof(s.c_str()) / 1000.0;
+			s.erase(0, s.find(':')+1);
+			vol = atof(s.c_str()) / 100.0;
+
+			if (ms<=0)
+			{
+				cerr << "Negatif time not allowed." << endl;
+				exit(1);
+			}
+
+			buf_size = ech * ms;
+
+			if (buf_size == 0 || buf_size > 1000000)
+			{
+				cerr << "Bad Buffer size : " << buf_size << endl;
+				exit(1);
+			}
+
+			buf_left = new float[buf_size];
+			buf_right = new float[buf_size];
+			for(uint32_t i=0; i<buf_size; i++)
+			{
+				buf_left[i] = 0;
+				buf_right[i] = 0;
+			}
+			index = 0;
+			ech_vol = 1.0 - vol;
+			ech_vol = 1.0;
+
+			generator = factory(in, true);
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			float l=0;
+			float r=0;
+			generator->next(l,r,speed);
+
+			if (echo)
+			{
+				float ll = buf_left[index];
+				float rr = buf_right[index];
+
+				buf_left[index] = l;
+				buf_right[index] = r;
+
+				l = l*ech_vol + ll*vol;
+				r = r*ech_vol + rr*vol;
+			}
+			else
+			{
+				l = l*ech_vol + buf_left[index]*vol;
+				r = r*ech_vol + buf_right[index]*vol;
+
+				buf_left[index] = l;
+				buf_right[index] = r;
+			}
+			index++;
+			if (index==buf_size)
+				index= 0;
+
+			left += l;
+			right += r;
+		}
+
+	protected:
+		virtual void help(ostream& out) const
+		{
+			out << "reverb ms:vol generator" << endl;
+			out << "echo ms:vol generator" << endl;
+		}
+
+		virtual SoundGenerator* build(istream &in) const
+		{ return new ReverbGenerator(in); }
+
+	private:
+		bool echo;
+		float vol;
+		float ech_vol;
+		float* buf_left;
+		float* buf_right;
+		uint32_t	buf_size;
+		uint32_t	index;
+		SoundGenerator* generator;
+};
+
+class AdsrGenerator : public SoundGenerator
+{
+	struct value
+	{
+		float s;
+		float vol;
+
+		bool operator <= (const value &v)
+		{
+			return s <= v.s;
+		}
+
+		friend ostream& operator<< (ostream &out, const value &v)
+		{
+			out << '(' << v.s << "s, " << v.vol << ')';
+			return out;
+		}
+	};
+
+	public:
+		AdsrGenerator() : SoundGenerator("adsr"){}
+
+		AdsrGenerator(istream& in)
+		{
+			value v;
+			value prev;
+			prev.s = 0;
+			prev.vol = 0;
+
+			while(read(in, v))
+			{
+				if (v <= prev)
+				{
+					cerr << "ADSR times must be ordered." << endl;
+					cerr << "previous ms=" << prev.s << " current=" << v.s << endl;
+					exit(1);
+				}
+				values.push_back(v);
+				prev = v;
+			}
+
+			if (values.size()==0)
+			{
+				cerr << "ADSR must contains at least 1 value at t>0ms." << endl;
+				exit(1);
+			}
+
+			generator = factory(in,true);
+			dt = 1.0 / (float)ech;
+			restart();
+		}
+
+		void restart()
+		{
+			t=0;
+			index = 0;
+			target = values[0];
+			previous.s = 0;
+			previous.vol = 0;
+		}
+
+		bool read(istream &in, value &val)
+		{
+			string s;
+			in >> s;
+			if (s=="once")
+			{
+				loop = false;
+				return false;
+			}
+			else if (s=="loop")
+			{
+				loop = true;
+				return false;
+			}
+
+			if (s.find(':')==string::npos)
+			{
+				cerr << "Missing : in value or type (once/loop) for adsr." << endl;
+				exit(1);
+			}
+			val.s = atof(s.c_str()) / 1000;
+			s.erase(0, s.find(':')+1);
+			val.vol = atof(s.c_str()) / 100;		
+			return true;
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			float l=0;
+			float r=0;
+			generator->next(l, r, speed);
+			
+			if (index >= values.size())
+			{
+				left += l*target.vol;
+				right += r*target.vol;
+				return;
+			}
+
+			t += dt;
+			while (t >= target.s)
+			{
+				previous = target;
+				index++;
+				if (index < values.size())
+					target = values[index];
+				else
+				{
+					if (loop) restart();
+					break;
+				}
+			}
+
+			float factor = (t-previous.s)  / (target.s - previous.s);
+			float vol = previous.vol  + (target.vol-previous.vol)*factor;
+
+			left += l*vol;
+			right += r*vol;
+		}
+
+	protected:
+		virtual SoundGenerator* build(istream &in) const
+		{ return new AdsrGenerator(in); }
+
+		virtual void help(ostream &out) const
+		{
+			out << "adsr ms:vol ... ms:vol type generator : adsr type envelope generator" << endl;
+			out << "   ms  : time in ms" << endl;
+			out << "   vol : volume at this time (0..1)" << endl;
+			out << "   type: either once or loop" << endl;
+		}
+
+	private:
+		float t;
+		float dt;
+
+		value previous;
+		value target;
+		uint32_t index;
+		vector<value>	values;
+		SoundGenerator* generator;
+		bool loop;
+};
+
 SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 {
+	SoundGenerator* gen=0;
+	last_type="";
 	string type;
-	in >> type;
-	cout << "GENERATOR TYPE " << type << endl;
-	auto it = generators.find(type);
-	if (it == generators.end())
+	while(in.good())
 	{
-		if (needed)
+	in >> type;
+		if (type.length() && type[0] != '#')
+			break;
+		else
+	{
+			string s;
+			getline(in, s);
+		}
+	}
+	if (type.find(".synth") != string::npos)	// assume a file
 		{
-			cerr << "Missing generator" << endl;
+		ifstream file(type);
+		if (file.good())
+			gen = factory(file, needed);
+	}
+	else if (type == "print")
+	{
+		string line;
+		getline(in, line);
+		if (echo)
+			cout << line << endl;
+		gen = factory(in, needed);
+	}
+	else if (type == "-q")
+	{
+		echo = false;
+	}
+	else if (type=="define")
+	{
+		string name;
+		in >> name;
+		if (name.length())
+		{
+			uint16_t brackets = 0;
+			stringstream define;
+			do
+			{
+				string item;
+				in >> item;
+				if (item == "{")
+					brackets++;
+				else if (item == "}")
+					brackets--;
+				else if (brackets == 0)
+				{
+					string end_of_line;
+					getline(in, end_of_line);
+					define << end_of_line << endl;
+					break;
+				}
+				define << item << ' ';
+			} while (brackets && in.good());
+			defines[name] = define.str();
+
+			gen = factory(in, needed);
+		}
+		else
+		{
+			cerr << "missing name" << endl;
 			exit(1);
 		}
-		last_type = type;
-		return 0;
 	}
-	return it->second->build(in);
+	else if (type.length())
+	{
+		last_type = type;
+		auto it = generators.find(last_type);
+		if (it != generators.end())
+		{
+			gen = it->second->build(in);
+			if (gen == 0)
+			{
+				cerr << "Unable to build " << last_type << endl;
+				exit(1);
+	}
+		}
+		else
+		{
+			auto it = defines.find(last_type);
+			if (it != defines.end())
+			{
+				stringstream def;
+				def << defines[last_type];
+				gen = factory(def,false);
+				if (gen == 0)
+				{
+					cerr << "Unable to build " << last_type << ", pleasee fix the corresponding define." << endl;
+					exit(1);
+				}
+			}
+		}
+		if (gen == 0)
+			cerr << "Unknown generator " << type << endl;
+	}
+	if (gen == 0)
+	{
+		if (needed)
+			missingGeneratorExit("");
+	}
+	return gen;
 }
 
 list<SoundGenerator*>	list_generator;
@@ -734,6 +1212,7 @@ void help()
 	cout << "  duration     : sound duration (ms)" << endl;
 	cout << endl;
 	cout << "Available sound generators : " << endl;
+	cout << "  file.synth : read synth file" << endl;
 
 	SoundGenerator::help();
 
@@ -752,7 +1231,10 @@ static WhiteNoiseGenerator gen_wn;
 static EnvelopeSound gen_env;
 static LeftSound gen_left;
 static RightSound gen_right;
-
+static AdsrGenerator gen_adrs;
+static ReverbGenerator gen_reverb;
+static LevelSound gen_level;
+static MonoGenerator gen_mono;
 
 void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
 	if (list_generator.size()==0)
@@ -771,13 +1253,13 @@ void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
 		stream[i] = 32767 * left / list_generator.size();
 		stream[i+1] = 32767 * right / list_generator.size();
 	}
-
 }
 
 int main(int argc, const char* argv[])
 {
 	long duration;
 	int i(1);
+	long buf_length = BUF_LENGTH;
 	stringstream input;
 
 	if (argc<2)
@@ -797,9 +1279,13 @@ int main(int argc, const char* argv[])
 
 	for(; i<argc; i++)
 	{
-		if ((string)argv[i]=="help" || (string)argv[i]=="-h")
+		string arg(argv[i]);
+		if (arg=="help" || arg=="-h")
 			help();
-		input << argv[i] << ' ';
+		else if (arg=="-b")
+			buf_length = atol(argv[++i]);
+		else
+			input << arg << ' ';
 	}
 
 	string arg;
@@ -811,9 +1297,10 @@ int main(int argc, const char* argv[])
 	}
 
 	if (list_generator.size()==0)
-		help();
-
-	cout << "Number of generators : " << list_generator.size() << ", now playing ..." << endl;
+	{
+		cerr << "Parsing ok, but not generator list is empty" << endl;
+		exit(1);
+	}
 
 	SDL_Init(SDL_INIT_AUDIO | SDL_INIT_TIMER);
 	SDL_AudioSpec want, have;
@@ -823,8 +1310,9 @@ int main(int argc, const char* argv[])
 	want.freq = ech;
 	want.format = AUDIO_S16SYS;
 	want.channels = 2;
-	want.samples = BUF_LENGTH;
+	want.samples = buf_length;
 	want.callback = audioCallback;
+
 
 	dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
 	if (dev == 0) {
@@ -833,7 +1321,8 @@ int main(int argc, const char* argv[])
 		if (have.format != want.format) { /* we let this one thing change. */
 			SDL_Log("We didn't get Float32 audio format.");
 		}
-		cout << "ECH = " << have.freq << " duration=" << duration << endl;
+		if (buf_length != BUF_LENGTH)
+			cout << "Got buffer length : " << have.samples << " wanted: " << buf_length << endl;
 		SDL_PauseAudioDevice(dev, 0); /* start audio playing. */
 		SDL_Delay(duration); // Play for ms
 		SDL_CloseAudioDevice(dev);

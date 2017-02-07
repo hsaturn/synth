@@ -109,14 +109,18 @@ And here is the C++ code to define engine_speed
 
 ```c++
 float engine_speed;	// Float value that represents the engine speed
-class EngineSpeedHook : public SoundGeneratorFloatHook
+class EngineSpeedHook : public SoundGeneratorVarHook<float>
 {
 	public:
 		EngineSpeedHook(float &v) : SoundGeneratorFloatHook(v, 0.0, 100.0, "engine_speed"){}
 };
+
+static EngineSpeedHook instance;	// Needed to register the 'engine_speed' hook so it can be used.
 ```
 
 One should create more sophisticated hooks. See mouse.cpp for the class that defines mouse_hook.
+
+It 
 
 
 # examples
@@ -139,7 +143,7 @@ Mixing two signals, triangle @440Hz 50% volume and sinus 330Hz for 1sec
 
  > synth 1000 tri 440:50 sinus 330
 
-... Hum how to define that ??? 
+... Hum how to define that ???
 
  > synth 1000000 am 0 100 fm 80 120 sq 440:25 tri 1 square 5 am 0 100 fm 80 120 sq 330:25 tri 1 square 6 fm 80 120 sinus 1200:30 sinus 3
  
@@ -148,4 +152,3 @@ Mixing two signals, triangle @440Hz 50% volume and sinus 330Hz for 1sec
  > synth { sinus 220 sinus 330 }
  > synth fm 80 120 { sinus 1500 sinus 1300 } sinus 5
  
- >
