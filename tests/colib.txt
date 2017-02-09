@@ -1,0 +1,49 @@
+
+
+class NavetteSpeedHook : public SoundGeneratorVarHook<float>
+{
+	public:
+		NavetteSpeedHook(string name);
+
+		void update(float f);
+
+	private:
+		atomic<float> speed;
+};
+
+Dans navette.hpp
+
+NavetteSpeedHook* speed_hook;
+-- CPP --
+
+
+NavetteSpeedHook::NavetteSpeedHook(string name)
+	:
+		SoundGeneratorVarHook(&speed, 0, MAX_SPEED, name)
+{
+}
+
+void NavetteSpeedHook::update(float f)
+{
+	cout << "UPDATING " << speed << endl;
+	speed = f;
+}
+
+Navette::Navette(Bati* bati) : pbati(bati), z(0), plateau(0), moving_col(0)
+{
+	static int number=0;
+	string name="navette_"+StringUtil::to_string(number++);
+	z.setTarget(0);
+	z.setMaxVelocity(MAX_SPEED);
+	z.setMaxValue(100000);
+	z.setMaxVelocityThreshold(MAX_SPEED);
+	z.setAccel(10*FACTOR);
+	speed_hook = new NavetteSpeedHook(name);
+
+	cout << "BUILDING SOUND GENERATOR" << endl;
+	stringstream s;
+	s << "reverb 300:30 fm 0 200 sq 220:20 "+name+" 0 5";
+	SoundGenerator* sound = SoundGenerator::factory(s);
+	cout << "SOUND = " << sound << endl;
+	SoundGenerator::play(sound);
+}
