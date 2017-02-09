@@ -13,6 +13,7 @@
 #include <chrono>
 #include <atomic>
 #include <mutex>
+#include <memory>
 
 using namespace std;
 
@@ -56,6 +57,56 @@ class SoundGenerator
 		
 		static uint16_t bufSize() { return buf_size; }
 
+		class HelpOption
+		{
+			public:
+				HelpOption(string arg_name, string arg_desc, bool optional=false) : name(arg_name), desc(arg_desc), option(optional){};
+				
+				const string& getName() const { return name; }
+				const string& getDesc() const { return desc; }
+				bool isOptional() const { return option; }
+				
+			private:
+				string name;
+				string desc;
+				bool option;
+		};
+		class HelpEntry
+		{
+			public:
+				HelpEntry(string command, string description) : cmd(command), desc(description) {}
+				void addOption(HelpOption* option) { options.push_back(shared_ptr<HelpOption>(option)); }
+				void addExample(string ex) { example = ex; }
+				string concatOptions() const;
+				const string& getCmd() const { return cmd; }
+				const string& getDesc() const { return desc; }
+				const string& getExample() const { return example; }
+				const list<shared_ptr<HelpOption>>& getOptions() const { return options; }
+				
+			private:
+				string cmd;
+				string desc;
+				string example;
+				list<shared_ptr<HelpOption>> options;
+		};
+		
+		class Help
+		{
+			public:
+				void add(HelpEntry* entry) { entries.push_back(shared_ptr<HelpEntry>(entry)); }
+				friend class SoundGenerator;
+				
+				friend ostream& operator<<(ostream& out, const Help&);
+				Help(){};
+				
+				static string padString(string s, string::size_type length);
+				
+			private:
+				
+				string cmd;
+				string desc;
+				list<shared_ptr<HelpEntry>> entries;
+		};
 	protected:
 		SoundGenerator() {};
 
@@ -67,7 +118,9 @@ class SoundGenerator
 
 
 		virtual SoundGenerator* build(istream& in) const=0;
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
+		void help(ostream&) const;
+		HelpEntry* addHelpOption(HelpEntry*) const;
 		
 		// Main audio callback
 		static void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength);
@@ -156,10 +209,8 @@ class WhiteNoiseGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream &in) const
 		{ return new WhiteNoiseGenerator(in); }
 
-		virtual void help(ostream& out) const
-		{
-			out << "wnoise" << endl;
-		}
+		virtual void help(Help& help) const
+		{	help.add(new HelpEntry("wnoise","Generator white noise")); }
 
 };
 
@@ -177,7 +228,7 @@ class TriangleGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new TriangleGenerator(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		float a;
@@ -200,7 +251,7 @@ class SquareGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new SquareGenerator(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		float a;
@@ -223,7 +274,7 @@ class SinusGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new SinusGenerator(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 
 	private:
@@ -245,7 +296,7 @@ class DistortionGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new DistortionGenerator(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		float level;
@@ -287,7 +338,7 @@ class FmGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new FmGenerator(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		float min;
@@ -315,7 +366,7 @@ class MixerGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream &in) const
 		{ return new MixerGenerator(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		list<SoundGenerator*>	generators;
@@ -339,7 +390,7 @@ class LeftSound : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new LeftSound(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 
 	private:
@@ -360,7 +411,7 @@ class RightSound : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new RightSound(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		SoundGenerator* generator;
@@ -380,7 +431,7 @@ class EnvelopeSound : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new EnvelopeSound(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		bool loop;
@@ -400,7 +451,7 @@ class MonoGenerator : public SoundGenerator
 
 		virtual void next(float &left, float &right, float speed = 1.0);
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	protected:
 		virtual SoundGenerator* build(istream &in) const
@@ -422,7 +473,7 @@ class AmGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream& in) const
 		{ return new AmGenerator(in); }
 
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 	private:
 		float min;
@@ -441,7 +492,7 @@ class ReverbGenerator : public SoundGenerator
 		virtual void next(float &left, float &right, float speed=1.0);
 
 	protected:
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 
 		virtual SoundGenerator* build(istream &in) const
 		{ return new ReverbGenerator(in); }
@@ -468,7 +519,7 @@ class AvcRegulator : public SoundGenerator
 		
 		virtual void next(float &left, float &right, float speed=1.0);
 		
-		virtual void help(ostream& out) const;
+		virtual void help(Help& help) const;
 		
 	private:
 		virtual SoundGenerator* build(istream& in) const
@@ -511,7 +562,7 @@ class AdsrGenerator : public SoundGenerator
 		virtual SoundGenerator* build(istream &in) const
 		{ return new AdsrGenerator(in); }
 
-		virtual void help(ostream &out) const;
+		virtual void help(Help &) const;
 
 	private:
 		float t;
