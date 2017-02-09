@@ -8,8 +8,4 @@ mousynth: mouse.cpp synth.cpp
 
 test: synth
 	./tests/tests.sh
-	
-clean:
-	rm -f synth
-	rm -f mousynth
 
