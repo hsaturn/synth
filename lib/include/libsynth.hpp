@@ -1,3 +1,6 @@
+#ifndef LIBSYNTHETISER
+#define LIBSYNTHETISER
+
 #include <SDL2/SDL.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,8 +19,6 @@
 #include <memory>
 
 using namespace std;
-
-uint32_t ech = 48000;
 
 const int BUF_LENGTH = 8192;
 
@@ -182,7 +183,7 @@ class SoundGeneratorVarHook : public SoundGenerator
 		}
 
 		virtual void help(ostream &out) const
-		{ out << "Help not define (SoundGeneratorVarHook)" << endl; }
+		{ out << "Help not defined (SoundGeneratorVarHook)" << endl; }
 
 	protected:
 		virtual SoundGenerator* build(istream &in) const
@@ -617,4 +618,4 @@ class ChainSound : public SoundGenerator
 		float t;
 };
 
-
+#endif

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.4.0)
-project(synthesizer)
+project(synthetizer)
 set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
 
 
@@ -18,11 +18,11 @@ add_library(${PROJECT_NAME} SHARED ${SOURCES})
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES} ${SDLMIXER_LIBRARIES})
 
 # Install library
-install(TARGETS ${PROJECT_NAME} DESTINATION lib/${PROJECT_NAME})
+install(TARGETS ${PROJECT_NAME} DESTINATION lib)
 
 # Install library headers
 file(GLOB HEADERS include/*.hpp)
-install(FILES ${HEADERS} DESTINATION include/${PROJECT_NAME})
+install(FILES ${HEADERS} DESTINATION include)
 
 # Add includes for bin makefiles
 target_include_directories (${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

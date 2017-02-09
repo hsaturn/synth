@@ -31,12 +31,6 @@ int main(int argc, const char* argv[])
 	else
 		i++;
 
-	ech = atol(argv[i]);
-	if (ech==0)
-		ech=48000;
-	else
-		i++;
-
 	for(; i<argc; i++)
 	{
 		string arg(argv[i]);

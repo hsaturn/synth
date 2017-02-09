@@ -1,7 +1,7 @@
 file(GLOB SynthSrc "*.cpp")
 
 add_executable(synth ${SynthSrc})
-target_link_libraries(synth LINK_PUBLIC synthesizer)
+target_link_libraries(synth LINK_PUBLIC synthetizer)
 
 add_custom_target (
 	test_synth

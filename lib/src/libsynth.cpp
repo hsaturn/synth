@@ -11,6 +11,8 @@
 #include "libsynth.hpp"
 #include <cstdlib>
 
+static uint32_t ech = 48000;
+
 map<string, const SoundGenerator*> SoundGenerator::generators;
 string					SoundGenerator::last_type;
 map<string, string>		SoundGenerator::defines;
