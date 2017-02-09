@@ -4,9 +4,7 @@ set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "
 
 
 INCLUDE(FindPkgConfig)
-
 pkg_search_module(SDL2 REQUIRED sdl2)
-pkg_search_module(SDLMIXER REQUIRED sdl-mixer)
 pkg_search_module(SDL_mixer REQUIRED SDL_mixer>=1.0.0)
 
 # Find source files
