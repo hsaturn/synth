@@ -34,6 +34,8 @@ class SoundGenerator
 		// added value should be from -1 to 1
 		// speed = samples/sec modifier
 		virtual void next(float &left, float &right, float speed=1.0) = 0;
+		
+		virtual void reset() {};
 
 		static SoundGenerator* factory(istream& in, bool needed=false);
 		static string getTypes();
@@ -515,7 +517,7 @@ class AvcRegulator : public SoundGenerator
 		
 		AvcRegulator(istream &in);
 		
-		void reset() { gain = 1.0; }
+		virtual void reset() { gain = 1.0; }
 		
 		virtual void next(float &left, float &right, float speed=1.0);
 		
@@ -529,41 +531,6 @@ class AvcRegulator : public SoundGenerator
 		float speed;
 		float gain;
 		float min_gain;
-};
-
-class ChainSound : public SoundGenerator
-{
-	class ChainElement
-	{
-		public:
-			ChainElement(uint32_t ms, SoundGenerator* g) : t(ms/1000.0), sound(g){};
-			
-		float t;
-		SoundGenerator* sound;
-	};
-
-	public:
-		ChainSound() : SoundGenerator("chain") {}
-
-		ChainSound(istream& in);
-
-		void add(uint32_t ms, SoundGenerator* g);
-
-		void reset();
-
-		virtual void next(float &left, float &right, float speed=1.0);
-
-		virtual void help(Help& help) const;
-
-	private:
-		virtual SoundGenerator* build(istream& in) const
-		{ return new ChainSound(in); }
-
-		list<ChainElement> sounds;
-		list<ChainElement>::const_iterator it;
-
-		float dt;
-		float t;
 };
 
 class AdsrGenerator : public SoundGenerator
@@ -587,11 +554,13 @@ class AdsrGenerator : public SoundGenerator
 
 		AdsrGenerator(istream& in);
 
-		void restart();
+		virtual void reset();
 
 		bool read(istream &in, value &val);
 
 		virtual void next(float &left, float &right, float speed=1.0);
+		
+		void setSound(SoundGenerator* sound) { generator = sound; }
 
 	protected:
 		virtual SoundGenerator* build(istream &in) const
@@ -610,3 +579,42 @@ class AdsrGenerator : public SoundGenerator
 		SoundGenerator* generator;
 		bool loop;
 };
+
+class ChainSound : public SoundGenerator
+{
+	class ChainElement
+	{
+		public:
+			ChainElement(uint32_t ms, SoundGenerator* g) : t(ms/1000.0), sound(g){};
+			
+		float t;
+		SoundGenerator* sound;
+	};
+
+	public:
+		ChainSound() : SoundGenerator("chain") {}
+
+		ChainSound(istream& in);
+
+		void add(uint32_t ms, SoundGenerator* g);
+
+		virtual void reset();
+
+		virtual void next(float &left, float &right, float speed=1.0);
+
+		virtual void help(Help& help) const;
+
+	private:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new ChainSound(in); }
+
+		list<ChainElement> sounds;
+		list<ChainElement>::iterator it;
+
+		AdsrGenerator* adsr;
+		uint16_t gaps;
+		float dt;
+		float t;
+};
+
+

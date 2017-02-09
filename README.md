@@ -25,7 +25,9 @@ Auto mixing all sound generation of this kind :
 * left/right cut channel
 * mono converter
 * sound mixer
+* avc (automatic volume control)
 
+* chain of sounds (sequence)
 * external hooks sound generator (mouse sound demo)
 
 ## Misc features
@@ -38,6 +40,29 @@ Auto mixing all sound generation of this kind :
 * enveloppe definitions can be stored in files
 
 * easy to integrate to existing project
+
+* frequencies.def file can be filled with notes frequencies making it easy to
+write some small musics synth files.
+```
+262 DO C
+277 DO# REb C# Db
+294 RE D
+311 RE# MIb D# Eb
+330 MI E
+349 FA F
+370 FA# SOLb F# Gb
+392 SOL G
+415 SOL# LAb G# Bb
+440 LA A
+466 LA# SIb A# Bb
+494 SI B
+```
+And thus it is possible to play a little song :
+
+cd  bin/synth
+./synth ../../tests/song.synth
+
+In that case, (yet) synth mush be launched from bin/synth because the frequencies file is read from the current directory.
 
 Example of a engine noise that accelerates
 

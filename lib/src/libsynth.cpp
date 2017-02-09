@@ -156,20 +156,55 @@ void SoundGenerator::close()
 
 SoundGenerator::SoundGenerator(istream& in)
 {
+	static map<string, float> sf;
+	
+	if (sf.size()==0)
+	{
+		ifstream notes("frequencies.def");
+		while(notes.good())
+		{
+			string row;
+			getline(notes, row);
+			stringstream note;
+			note << row;
+			
+			float freq;
+			note >> freq;
+			if (freq)
+			{
+				string name;
+				while(note.good())
+				{
+					note >> name;
+					sf[name] = freq;
+				}
+			}
+		}
+	}
 	string s;
+	string note;
 	in >> s;
-	freq = atof(s.c_str());
+	
 	if (s.find(':')!=string::npos)
 	{
+		note = s.substr(0,s.find(':'));
 		s.erase(0, s.find(':')+1);
 		volume = atof(s.c_str())/100;
 	}
 	else
+	{
+		note = s;
 		volume = 1;
+	}
 
+	if (sf.find(note) != sf.end())
+		freq = sf[note];
+	else
+		freq = atof(note.c_str());
+	
 	if (freq<=0 || freq>30000)
 	{
-		cerr << "Invalid frequency " << freq << endl;
+		cerr << "Invalid frequency " << note << endl;
 		exit(1);
 	}
 
@@ -226,7 +261,7 @@ void SoundGenerator::missingGeneratorExit(string msg)
 
 void SoundGenerator::help(Help& help) const
 {
-	cout << "freq[:volume] (not in help system)";
+	cout << "freq[:volume] (not in help system)" << endl;;
 }
 
 void SoundGenerator::play(SoundGenerator* generator)
@@ -269,7 +304,7 @@ ostream& operator << (ostream& out, const SoundGenerator::Help &help)
 			string opt = option->getName();
 			if (option->isOptional())
 				opt = '['+opt+']';
-			out << SoundGenerator::Help::padString("", cmd) << "   ";
+			out << "     " << SoundGenerator::Help::padString("", cmd) << "   ";
 			out << SoundGenerator::Help::padString(opt, l) << " : " << option->getDesc() << endl;
 		}
 		
@@ -839,10 +874,10 @@ AdsrGenerator::AdsrGenerator(istream& in) {
 
 	generator = factory(in, true);
 	dt = 1.0 / (float) ech;
-	restart();
+	reset();
 }
 
-void AdsrGenerator::restart()
+void AdsrGenerator::reset()
 {
 	t=0;
 	index = 0;
@@ -879,6 +914,9 @@ bool AdsrGenerator::read(istream& in, value& val)
 
 void AdsrGenerator::next(float& left, float& right, float speed)
 {
+	if (generator==0)
+		return;
+	
 	float l=0;
 	float r=0;
 	generator->next(l, r, speed);
@@ -899,7 +937,7 @@ void AdsrGenerator::next(float& left, float& right, float speed)
 			target = values[index];
 		else
 		{
-			if (loop) restart();
+			if (loop) reset();
 			break;
 		}
 	}
@@ -930,15 +968,16 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 	string type;
 	while(in.good())
 	{
-	in >> type;
+		in >> type;
 		if (type.length() && type[0] != '#')
 			break;
 		else
-	{
+		{
 			string s;
 			getline(in, s);
 		}
 	}
+	
 	if (type.find(".synth") != string::npos)	// assume a file
 		{
 		ifstream file(type);
@@ -1081,21 +1120,81 @@ void AvcRegulator::help(Help& help) const
 	help.add(entry);
 }
 
+void ChainSound::help(Help& help) const
+{
+	HelpEntry* entry = new HelpEntry("chain", "Chain sounds in sequence");
+	entry->addOption(new HelpOption("adsr ...", "Sounds will be played with an adsr"));
+	entry->addOption(new HelpOption("ms xxx", "Set default duration (can appear many times"));
+	entry->addOption(new HelpOption("gaps ms", "Gaps between sounds (can appear many times)", true));
+	entry->addOption(new HelpOption("[ms] sound", "Duration /  Sound generator"));
+	entry->addOption(new HelpOption("...", "next sounds"));
+	entry->addOption(new HelpOption("end", "end of sequence"));
+	help.add(entry);
+}
+
 ChainSound::ChainSound(istream& in)
 {
+	adsr = 0;
 	uint32_t ms=0;
+	uint32_t def_ms=0;
 	while(in.good())
 	{
 		string sms;
+		stringstream::pos_type last = in.tellg();
+		
 		in >> sms;
 		if (sms == "end")
 			break;
-		ms += atol(sms.c_str());
-		SoundGenerator* sound = factory(in);
-		if (sound)
-			add(ms, sound);
+		
+		if (sms == "ms")
+		{
+			in >> def_ms;
+			if (def_ms <= 0)
+			{
+				cerr << "Cannot have null default duration" << endl;
+				exit(1);
+			}
+		}
+		else if (sms == "gaps")
+			in >> gaps;
+		else if (sms == "adsr")
+		{
+			if (adsr == 0)
+				adsr = new AdsrGenerator(in);
+			else
+			{
+				cerr << "Cannot have multiple adsr" << endl;
+				exit(1);
+			}
+		}
 		else
-			SoundGenerator::missingGeneratorExit();
+		{
+			uint32_t delta = atol(sms.c_str());
+			if (delta == 0)
+			{
+				in.clear();
+				in.seekg(last);
+				delta = def_ms;
+				if (delta == 0)
+				{
+					cerr << "No default duration (or missing duration)" << endl;
+					exit(1);
+				}
+			}
+			ms += delta;
+			
+			SoundGenerator* sound = factory(in);
+			if (sound)
+				add(ms, sound);
+			else
+				SoundGenerator::missingGeneratorExit();
+				
+			if (gaps)
+			{
+				ms += gaps;
+				sounds.push_back(ChainElement(ms, 0));
+			}
+		}
 	}
 	dt = 1.0/(float)ech;
 	reset();
@@ -1111,6 +1210,8 @@ void ChainSound::reset()
 {
 	t = 0;
 	it = sounds.begin();
+	if (adsr && it != sounds.end())
+		adsr->setSound(it->sound);
 }
 
 void ChainSound::next(float& left, float& right, float speed)
@@ -1118,21 +1219,26 @@ void ChainSound::next(float& left, float& right, float speed)
 	if (it!=sounds.end())
 	{
 		t += dt;
-		const ChainElement& sound=*it;
+		ChainElement& sound=*it;
 		if (t>sound.t)
+		{
 			it++;
-		sound.sound->next(left, right, speed);
+			if (adsr)
+			{
+				adsr->reset();
+				adsr->setSound(it->sound);
+			}
+		}
+		if (sound.sound)
+		{
+			if (adsr)
+				adsr->next(left, right, speed);
+			else
+				sound.sound->next(left, right, speed);
+		}
 	}
 }
 
-void ChainSound::help(Help& help) const
-{
-	HelpEntry* entry = new HelpEntry("chain", "Chain sounds in sequence");
-	entry->addOption(new HelpOption("ms sound", "Duration /  Sound generator"));
-	entry->addOption(new HelpOption("...", "next sounds"));
-	entry->addOption(new HelpOption("end", "end of sequence"));
-	help.add(entry);
-}
 
 #endif /* LIBSYNTH_HPP */
 
