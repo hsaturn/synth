@@ -531,6 +531,41 @@ class AvcRegulator : public SoundGenerator
 		float min_gain;
 };
 
+class ChainSound : public SoundGenerator
+{
+	class ChainElement
+	{
+		public:
+			ChainElement(uint32_t ms, SoundGenerator* g) : t(ms/1000.0), sound(g){};
+			
+		float t;
+		SoundGenerator* sound;
+	};
+
+	public:
+		ChainSound() : SoundGenerator("chain") {}
+
+		ChainSound(istream& in);
+
+		void add(uint32_t ms, SoundGenerator* g);
+
+		void reset();
+
+		virtual void next(float &left, float &right, float speed=1.0);
+
+		virtual void help(Help& help) const;
+
+	private:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new ChainSound(in); }
+
+		list<ChainElement> sounds;
+		list<ChainElement>::const_iterator it;
+
+		float dt;
+		float t;
+};
+
 class AdsrGenerator : public SoundGenerator
 {
 	struct value

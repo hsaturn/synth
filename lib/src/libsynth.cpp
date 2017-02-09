@@ -40,6 +40,7 @@ static ReverbGenerator gen_reverb;
 static LevelSound gen_level;
 static MonoGenerator gen_mono;
 static AvcRegulator gen_avc;
+static ChainSound gen_chain;
 
 SoundGenerator::SoundGenerator(string name)
 {
@@ -1079,5 +1080,59 @@ void AvcRegulator::help(Help& help) const
 	entry->addOption(new HelpOption("sound", "Affected sound generator"));
 	help.add(entry);
 }
+
+ChainSound::ChainSound(istream& in)
+{
+	uint32_t ms=0;
+	while(in.good())
+	{
+		string sms;
+		in >> sms;
+		if (sms == "end")
+			break;
+		ms += atol(sms.c_str());
+		SoundGenerator* sound = factory(in);
+		if (sound)
+			add(ms, sound);
+		else
+			SoundGenerator::missingGeneratorExit();
+	}
+	dt = 1.0/(float)ech;
+	reset();
+}
+
+void ChainSound::add(uint32_t ms, SoundGenerator* g)
+{
+	if (g)
+		sounds.push_back(ChainElement(ms, g));
+}
+
+void ChainSound::reset()
+{
+	t = 0;
+	it = sounds.begin();
+}
+
+void ChainSound::next(float& left, float& right, float speed)
+{
+	if (it!=sounds.end())
+	{
+		t += dt;
+		const ChainElement& sound=*it;
+		if (t>sound.t)
+			it++;
+		sound.sound->next(left, right, speed);
+	}
+}
+
+void ChainSound::help(Help& help) const
+{
+	HelpEntry* entry = new HelpEntry("chain", "Chain sounds in sequence");
+	entry->addOption(new HelpOption("ms sound", "Duration /  Sound generator"));
+	entry->addOption(new HelpOption("...", "next sounds"));
+	entry->addOption(new HelpOption("end", "end of sequence"));
+	help.add(entry);
+}
+
 #endif /* LIBSYNTH_HPP */
 
