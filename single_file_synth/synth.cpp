@@ -1094,6 +1094,78 @@ class AdsrGenerator : public SoundGenerator
 		bool loop;
 };
 
+class ChainSound : public SoundGenerator
+{
+	class ChainElement
+	{
+		public:
+			ChainElement(uint32_t ms, SoundGenerator* g) : t(ms/1000.0), sound(g){};
+			
+		float t;
+		SoundGenerator* sound;
+	};
+
+	public:
+		ChainSound() : SoundGenerator("chain") {}
+
+		ChainSound(istream& in)
+		{
+			uint32_t ms=0;
+			while(in.good())
+			{
+				string sms;
+				in >> sms;
+				if (sms == "end")
+					break;
+				ms += atol(sms.c_str());
+				SoundGenerator* sound = factory(in);
+				if (sound)
+					add(ms, sound);
+				else
+					SoundGenerator::missingGeneratorExit();
+			}
+			dt = 1.0/(float)ech;
+			reset();
+		}
+
+		void add(uint32_t ms, SoundGenerator* g)
+		{
+			if (g)
+				sounds.push_back(ChainElement(ms, g));
+		}
+
+		void reset()
+		{
+			t = 0;
+			it = sounds.begin();
+		}
+
+		virtual void next(float &left, float &right, float speed=1.0)
+		{
+			if (it!=sounds.end())
+			{
+				t += dt;
+				const ChainElement& sound=*it;
+				if (t>sound.t)
+					it++;
+				sound.sound->next(left, right, speed);
+			}
+		}
+
+		virtual void help(ostream& out) const
+		{ out << "chain ms sound_1 ms sound_2 ... end" << endl; }
+
+	private:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new ChainSound(in); }
+
+		list<ChainElement> sounds;
+		list<ChainElement>::const_iterator it;
+
+		float dt;
+		float t;
+};
+
 SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 {
 	SoundGenerator* gen=0;
@@ -1235,6 +1307,7 @@ static AdsrGenerator gen_adrs;
 static ReverbGenerator gen_reverb;
 static LevelSound gen_level;
 static MonoGenerator gen_mono;
+static ChainSound gen_chain;
 
 void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength) {
 	if (list_generator.size()==0)
