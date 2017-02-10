@@ -29,23 +29,6 @@ void Oscilloscope::Oscilloscope::Buffer::render(SDL_Renderer* r, int w, int h, b
 	else
 		p=rmax.pos;
 
-	// Find 0
-	/*
-	float v0=1;
-	while(p<pos && p<size)
-	{
-		float v=buffer[p];
-		if (v>v0 && v0<0 && v>=0)
-			break;
-		else
-			v0 = v;
-		p +=2;
-	}
-	if (p>=pos)
-	{
-		return;	// Nothing to draw (0 not found))
-	} */
-
 	float x=0;
 
 	int lastx=-1;

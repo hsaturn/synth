@@ -63,25 +63,42 @@ class SoundGenerator
 
 		class HelpOption
 		{
+			typedef uint8_t flag_type;
 			public:
-				HelpOption(string arg_name, string arg_desc, bool optional=false) : name(arg_name), desc(arg_desc), option(optional){};
+				static const flag_type OPTIONAL = 1;	// Option is optional
+				static const flag_type REPEAT = 2;	// Option can be repeated
+				static const flag_type INPUT = 4;
+				static const flag_type GENERATOR = 8;	// Name of the option IS the registered name of a SoundGenerator
+				static const flag_type MS_VOL = 16;		// Time in ms (float) / Volume in % couple.
+				static const flag_type FREQ_VOL = 32;	// Frequency in HZ (float) / Volume in % couple.
+				static const flag_type CHOICE = 64;		// Dropdown List of fixed values (*MUST* appear at beginning of arg_desc with the format [opt1|opt2...]
+				
+				HelpOption(string arg_name, string arg_desc, flag_type opt_flags=0) : name(arg_name), desc(arg_desc), flags(opt_flags){};
 				
 				const string& getName() const { return name; }
 				const string& getDesc() const { return desc; }
-				bool isOptional() const { return option; }
+				string str() const;
+				
+				bool isOptional() const { return flags & OPTIONAL; }
+				bool isRepeatable() const { return flags & REPEAT; }
 				
 			private:
 				string name;
 				string desc;
-				bool option;
+				flag_type flags;
 		};
 		class HelpEntry
 		{
 			public:
+				/**
+				 * @param command : $ is replaced by options, else, they are appended
+				 * @param description
+				 */
 				HelpEntry(string command, string description) : cmd(command), desc(description) {}
 				void addOption(HelpOption* option) { options.push_back(shared_ptr<HelpOption>(option)); }
 				void addExample(string ex) { example = ex; }
 				string concatOptions() const;
+				string getFullCmd() const;
 				const string& getCmd() const { return cmd; }
 				const string& getDesc() const { return desc; }
 				const string& getExample() const { return example; }
@@ -177,7 +194,7 @@ class SoundGeneratorVarHook : public SoundGenerator
 
 		virtual void next(float &left, float &right, float speed=1.0)
 		{
-			float delta = (float)(*mref - mmin)/(float)(mmax-mmin);
+			float delta = 2.0*(float)(*mref - mmin)/(float)(mmax-mmin) - 1.0;
 
 			left += delta;
 			right += delta;

@@ -119,7 +119,7 @@ void TriangleGenerator::next(float& left, float& right, float speed)
 void TriangleGenerator::help(Help& help) const
 {
 	HelpEntry* entry = SoundGenerator::addHelpOption(new HelpEntry("triangle","triangle sound"));
-	entry->addOption(new HelpOption("type", "[tri|asc|desc] Type of signal triangle or asc/desc sawtooth (default  :tri)", true));
+	entry->addOption(new HelpOption("type", "[tri|asc|desc] Type of signal triangle or asc/desc sawtooth (default  :tri)", HelpOption::OPTIONAL | HelpOption::CHOICE));
 	help.add(entry);
 }
 
@@ -202,7 +202,7 @@ void DistortionGenerator::help(Help& help) const
 {
 	HelpEntry* entry=new HelpEntry("distortion","Distort sound");
 	entry->addOption(new HelpOption("lvl","0..100, level of distorsion"));
-	entry->addOption(new HelpOption("sound", "Sound generator to distort"));
+	entry->addOption(new HelpOption("sound", "Sound generator to distort", HelpOption::GENERATOR));
 	entry->addExample("distorsion 50 sinus 200");
 	help.add(entry);
 }
@@ -276,9 +276,9 @@ void FmGenerator::help(Help& help) const
 	HelpEntry* entry = new HelpEntry("fm", "Frequency modulation");
 	entry->addOption(new HelpOption("min", "0..200% modulation when modulator=-1"));
 	entry->addOption(new HelpOption("max", "0..200% modulation when modulator=1"));
-	entry->addOption(new HelpOption("spd_mod","[generator|modulator|both] : Where to apply speed modification ", true));
-	entry->addOption(new HelpOption("sound", "What sound to modulate"));
-	entry->addOption(new HelpOption("modulator", "Modulator of sound (any generator)"));
+	entry->addOption(new HelpOption("spd_mod","[generator|modulator|both] : Where to apply speed modification ",  HelpOption::OPTIONAL | HelpOption::CHOICE));
+	entry->addOption(new HelpOption("sound", "What sound to modulate", HelpOption::GENERATOR));
+	entry->addOption(new HelpOption("modulator", "Modulator of sound (any generator)", HelpOption::GENERATOR));
 	entry->addExample("fm 80 120 sq 220 sin 10 : 220Hz square modulated with sinus");
 	help.add(entry);
 }
@@ -325,7 +325,9 @@ void MixerGenerator::next(float& left, float& right, float speed)
 
 void MixerGenerator::help(Help& help) const
 {
-	help.add(new HelpEntry("{ sound_1 [sound_2 ...] }", "mix together sounds and adjust volume accordingly"));
+	HelpEntry* entry = new HelpEntry("{ $ }", "mix together sounds and adjust volume accordingly");
+	entry->addOption(new HelpOption("sound", "Sound generators", HelpOption::OPTIONAL | HelpOption::REPEAT | HelpOption::GENERATOR));
+	help.add(entry);
 }
 
 void LeftSound::next(float& left, float& right, float speed)
@@ -337,7 +339,7 @@ void LeftSound::next(float& left, float& right, float speed)
 void LeftSound::help(Help& help) const
 {
 	HelpEntry* entry = new HelpEntry("left","Keep left part of signal");
-	entry->addOption(new HelpOption("sound", "Sound generator to apply on"));
+	entry->addOption(new HelpOption("sound", "Sound generator to apply on", HelpOption::GENERATOR));
 	help.add(entry);
 }
 
@@ -354,7 +356,7 @@ void RightSound::next(float& left, float& right, float speed)
 void RightSound::help(Help& help) const
 {
 	HelpEntry* entry = new HelpEntry("right","Keep right part of signal");
-	entry->addOption(new HelpOption("sound", "Generator to apply on"));
+	entry->addOption(new HelpOption("sound", "Generator to apply on", HelpOption::GENERATOR));
 	help.add(entry);
 }
 
@@ -478,7 +480,7 @@ void MonoGenerator::next(float& left, float& right, float speed)
 void MonoGenerator::help(Help& help) const
 {
 	HelpEntry* entry = new HelpEntry("mono","Mix left & right channel to monophonic output");
-	entry->addOption(new HelpOption("sound", "Sound generator to transform"));
+	entry->addOption(new HelpOption("sound", "Sound generator to transform", HelpOption::GENERATOR));
 	help.add(entry);
 }
 
@@ -518,8 +520,8 @@ void AmGenerator::help(Help& help) const
 	HelpEntry* entry = new HelpEntry("am", "Amplitude modulation");
 	entry->addOption(new HelpOption("min", "-200..200 % level of amplification when modulator=-1"));
 	entry->addOption(new HelpOption("max", "-200..200 % level of amplification when modulator=1"));
-	entry->addOption(new HelpOption("sound", "A generator to modulate"));
-	entry->addOption(new HelpOption("modulator", "A generator used as modulator"));
+	entry->addOption(new HelpOption("sound", "A generator to modulate", HelpOption::GENERATOR));
+	entry->addOption(new HelpOption("modulator", "A generator used as modulator", HelpOption::GENERATOR));
 	entry->addExample("am 0 100 sq 220 sin 10 : 220Hz square modulated with sinus@10Hz");
 	help.add(entry);
 }
@@ -599,8 +601,8 @@ void ReverbGenerator::next(float& left, float& right, float speed)
 void ReverbGenerator::help(Help& help) const
 {
 	HelpEntry* entry = new HelpEntry("reverb", "Reverberation");
-	entry->addOption(new HelpOption("ms:vol", "Shift time (ms) and % level of reverb"));
-	entry->addOption(new HelpOption("sound", "What sound to reverb (a generator)"));
+	entry->addOption(new HelpOption("ms:vol", "Shift time (ms) and % level of reverb", HelpOption::MS_VOL));
+	entry->addOption(new HelpOption("sound", "What sound to reverb (a generator)", HelpOption::GENERATOR));
 	help.add(entry);
 }
 
@@ -705,10 +707,9 @@ void AdsrGenerator::next(float& left, float& right, float speed)
 void AdsrGenerator::help(Help& help) const
 {
 	HelpEntry* entry = new HelpEntry("adsr", "Attack Decay Sustain Release (Hold Delay etc) enveloppe generator");
-	entry->addOption(new HelpOption("ms:vol", "Couples of time/level for the enveloppe (ms/%)"));
-	entry->addOption(new HelpOption("...","next couples"));
-	entry->addOption(new HelpOption("type", "'once' or 'loop' repeat option"));
-	entry->addOption(new HelpOption("sound", "Sound generator to modify"));
+	entry->addOption(new HelpOption("ms:vol", "Couples of time/level for the enveloppe (ms/%)", HelpOption::REPEAT | HelpOption::MS_VOL));
+	entry->addOption(new HelpOption("type", "[once|loop] repeat option", HelpOption::CHOICE));
+	entry->addOption(new HelpOption("sound", "Sound generator to modify", HelpOption::GENERATOR));
 	entry->addExample("adsr 1:0 1000:100 2000:0 loop sinus 440");
 	help.add(entry);
 }
@@ -752,18 +753,17 @@ void AvcRegulator::next(float& left, float& right, float sp)
 void AvcRegulator::help(Help& help) const
 {
 	HelpEntry* entry = new HelpEntry("avc", "Automatic volume control");
-	entry->addOption(new HelpOption("sound", "Affected sound generator"));
+	entry->addOption(new HelpOption("sound", "Affected sound generator", HelpOption::GENERATOR));
 	help.add(entry);
 }
 
 void ChainSound::help(Help& help) const
 {
 	HelpEntry* entry = new HelpEntry("chain", "Chain sounds in sequence");
-	entry->addOption(new HelpOption("adsr ...", "Sounds will be played with an adsr"));
+	entry->addOption(new HelpOption("adsr", "Sounds will be played with an adsr", HelpOption::GENERATOR));
 	entry->addOption(new HelpOption("ms xxx", "Set default duration (can appear many times"));
-	entry->addOption(new HelpOption("gaps ms", "Gaps between sounds (can appear many times)", true));
-	entry->addOption(new HelpOption("[ms] sound", "Duration /  Sound generator"));
-	entry->addOption(new HelpOption("...", "next sounds"));
+	entry->addOption(new HelpOption("gaps ms", "Gaps between sounds (can appear many times)",  HelpOption::OPTIONAL));
+	entry->addOption(new HelpOption("[ms] sound", "Duration /  Sound generator", HelpOption::REPEAT));
 	entry->addOption(new HelpOption("end", "end of sequence"));
 	help.add(entry);
 }

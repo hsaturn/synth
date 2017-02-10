@@ -308,7 +308,7 @@ float SoundGenerator::rand()
 
 SoundGenerator::HelpEntry* SoundGenerator::addHelpOption(HelpEntry* entry) const
 {
-	entry->addOption(new HelpOption("freq:level", "Frequency and level (%)"));
+	entry->addOption(new HelpOption("freq:level", "Frequency and level (%)", HelpOption::FREQ_VOL));
 	return entry;
 }
 
@@ -382,30 +382,28 @@ ostream& operator << (ostream& out, const SoundGenerator::Help &help)
 	
 	for(auto entry: help.entries)
 	{
-		string options(entry->concatOptions());
-		if (entry->getCmd().length() + options.length() > cmd)
-			cmd = entry->getCmd().length() + options.length();
+		/* if (cmd < entry->getFullCmd().length())
+			cmd = entry->getFullCmd().length();
+		 */
 	}
 	cmd++;
 	for(auto entry: help.entries)
 	{
-		out << SoundGenerator::Help::padString(entry->getCmd() + ' ' + entry->concatOptions(), cmd) << " : ";
+		out << SoundGenerator::Help::padString(entry->getFullCmd(), cmd) << " : ";
 		out << entry->getDesc() << endl;
 		
 		string::size_type l=0;
 		for(auto option : entry->getOptions())
 		{
-			string opt = option->getName();
-			if (option->isOptional())
-				opt = '['+opt+']';
+			string opt = option->str();
 			if (opt.length()>l)
 				l = opt.length();
 		}
+		
+		// Display options (vertical alignment))
 		for(auto option : entry->getOptions())
 		{
-			string opt = option->getName();
-			if (option->isOptional())
-				opt = '['+opt+']';
+			string opt = option->str();
 			out << "     " << SoundGenerator::Help::padString("", cmd) << "   ";
 			out << SoundGenerator::Help::padString(opt, l) << " : " << option->getDesc() << endl;
 		}
@@ -413,7 +411,7 @@ ostream& operator << (ostream& out, const SoundGenerator::Help &help)
 		if (entry->getExample().length())
 		{
 			out << SoundGenerator::Help::padString("", cmd) << "   ";
-			out << SoundGenerator::Help::padString("Example", l) << " : " << entry->getExample() << endl;
+			out << SoundGenerator::Help::padString("Example", l + 5) << " : " << entry->getExample() << endl;
 		}
 		
 		out << endl;
@@ -436,11 +434,36 @@ string SoundGenerator::HelpEntry::concatOptions() const
 	{
 		if (concat.length())
 			concat +=' ';
-		if (option->isOptional())
-			concat += '['+option->getName()+']';
-		else
-			concat += option->getName();
+		concat += option->str();
 	}
 	return concat;
 }
 
+string SoundGenerator::HelpEntry::getFullCmd() const
+{
+	string options(concatOptions());
+	
+	string fullCmd(cmd+' ');
+	string::size_type p = fullCmd.find('$');
+	if (p!=string::npos)
+		fullCmd = fullCmd.substr(0,p)+options+fullCmd.substr(p+1);
+	else
+		fullCmd = fullCmd + options;
+	return fullCmd;
+}
+
+string SoundGenerator::HelpOption::str() const
+{
+	string str;
+	if (isOptional())
+		str = '['+getName();
+	else
+		str = getName();
+	
+	if (isRepeatable())
+		str += " [" + getName()+"_2 ...]";
+	if (isOptional())
+		str += ']';
+	
+	return str;
+}
