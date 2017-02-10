@@ -1,4 +1,4 @@
-
+https://sourceforge.net/projects/basicsynth/?source=typ_redirect
 
 class NavetteSpeedHook : public SoundGeneratorVarHook<float>
 {
