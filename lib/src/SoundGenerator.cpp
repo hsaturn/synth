@@ -2,6 +2,9 @@
 
 extern uint32_t ech;
 
+// Frequencies list
+static map<string, float> sf;
+
 SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 {
 	init();
@@ -233,9 +236,9 @@ void SoundGenerator::close()
 	init_done = false;
 }
 
-SoundGenerator::SoundGenerator(istream& in)
+bool SoundGenerator::readFrequencyVolume(istream& in)
 {
-	static map<string, float> sf;
+	bool bRet;
 	
 	if (sf.size()==0)
 	{
@@ -260,6 +263,7 @@ SoundGenerator::SoundGenerator(istream& in)
 			}
 		}
 	}
+	
 	string s;
 	string note;
 	in >> s;
@@ -268,30 +272,17 @@ SoundGenerator::SoundGenerator(istream& in)
 	{
 		note = s.substr(0,s.find(':'));
 		s.erase(0, s.find(':')+1);
-		volume = atof(s.c_str())/100;
+		bRet = setValue("v", s);
 	}
 	else
 	{
 		note = s;
-		volume = 1;
+		bRet = setValue("v", 100);
 	}
 
-	if (sf.find(note) != sf.end())
-		freq = sf[note];
-	else
-		freq = atof(note.c_str());
+	bRet &= setValue("f", note);
 	
-	if (freq<=0 || freq>30000)
-	{
-		cerr << "Invalid frequency " << note << endl;
-		exit(1);
-	}
-
-	if (volume<-2 || volume>2)
-	{
-		cerr << "Invalid volume " << volume*100 << endl;
-		exit(1);
-	}
+	return bRet;
 }
 
 string SoundGenerator::getTypes() {
@@ -466,4 +457,61 @@ string SoundGenerator::HelpOption::str() const
 		str += ']';
 	
 	return str;
+}
+
+bool SoundGenerator::setValue(string name, float value)
+{
+	stringstream in;
+	in << value;
+	return setValue(name, in);
+}
+
+bool SoundGenerator::setValue(string name, string value)
+{
+	stringstream in;
+	in << value;
+	return setValue(name, in);
+}
+
+bool SoundGenerator::setValue(string name, istream &in)
+{
+	bool bRet = false;
+	stringstream in2;
+	if (in2.good())
+	{
+		if (name=="v")
+		{
+			in >> volume;
+			in2 << volume;
+
+			volume /= 100.0;
+
+			bRet = true;
+		}
+		else if (name=="f")
+		{
+			string note;
+			in >> note;
+
+			if (sf.find(note) != sf.end())
+				note = sf[note];
+
+			freq = atol(note.c_str());
+
+			in2 << note;
+			bRet = true;
+		}
+	}
+	if (bRet)
+		_setValue(name, in2);
+	else
+		_setValue(name, in);
+	
+	return bRet;
+}
+
+bool SoundGenerator::_setValue(string name, istream& value)
+{
+	cerr << "libsynth Warning: _setValue(" << name << ", istream&) not handled." << endl;
+	return false;
 }

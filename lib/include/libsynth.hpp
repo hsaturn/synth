@@ -37,6 +37,12 @@ class SoundGenerator
 		virtual void next(float &left, float &right, float speed=1.0) = 0;
 		
 		virtual void reset() {};
+		
+		bool setValue(string name, float value);
+		bool setValue(string name, string value);
+		bool setValue(string name, istream& value);
+		
+		virtual string getValue(string name) const { return "?"; };
 
 		static SoundGenerator* factory(istream& in, bool needed=false);
 		static string getTypes();
@@ -129,14 +135,13 @@ class SoundGenerator
 				list<shared_ptr<HelpEntry>> entries;
 		};
 	protected:
+		virtual bool _setValue(string name, istream& value);
 		SoundGenerator() {};
 
 		// Auto register for the factory
 		SoundGenerator(string name);
 
-		// Generic constructor for freq:vol
-		SoundGenerator(istream& in);
-
+		bool readFrequencyVolume(istream &in);
 
 		virtual SoundGenerator* build(istream& in) const=0;
 		virtual void help(Help& help) const;
@@ -250,6 +255,7 @@ class TriangleGenerator : public SoundGenerator
 		virtual void reset();
 
 	protected:
+		virtual bool _setValue(string name, istream& in);
 		virtual SoundGenerator* build(istream& in) const
 		{ return new TriangleGenerator(in); }
 
@@ -274,6 +280,7 @@ class SquareGenerator : public SoundGenerator
 
 
 	protected:
+		virtual bool _setValue(string name, istream& in);
 		virtual SoundGenerator* build(istream& in) const
 		{ return new SquareGenerator(in); }
 
@@ -294,9 +301,10 @@ class SinusGenerator : public SoundGenerator
 		SinusGenerator(istream& in);
 
 		virtual void next(float &left, float &right, float speed=1.0);
-
-
+		
 	protected:
+		virtual bool _setValue(string name, istream& in);
+		
 		virtual SoundGenerator* build(istream& in) const
 		{ return new SinusGenerator(in); }
 

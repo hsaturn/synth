@@ -48,16 +48,29 @@ static Oscilloscope gen_osc;
 
 
 TriangleGenerator::TriangleGenerator(istream& in)
-: SoundGenerator(in)
 {
+	readFrequencyVolume(in);
 	sign = 1;
-	dir = BIDIR;
 	
-	if (in.good())
+	setValue("type", in);
+	da = 4 / ((float) ech / freq);
+	if (dir != BIDIR)
+		da /= 2.0;
+	reset();
+}
+
+bool TriangleGenerator::_setValue(string name, istream& in)
+{
+	dir = BIDIR;
+	if (!in.good())
+		return false;
+
+	if (name == "type")
 	{
 		stringstream::pos_type last = in.tellg();
 		string asc_desc;
 		in >> asc_desc;
+		
 		if (asc_desc == "asc")
 		{
 			dir = ASC;
@@ -72,12 +85,12 @@ TriangleGenerator::TriangleGenerator(istream& in)
 		{
 			in.clear();
 			in.seekg(last);
+			return false;
 		}
+		return true;
 	}
-	da = 4 / ((float) ech / freq);
-	if (dir != BIDIR)
-		da /= 2.0;
-	reset();
+	else if (name=="f")
+		return false;
 }
 
 void TriangleGenerator::reset()
@@ -125,11 +138,22 @@ void TriangleGenerator::help(Help& help) const
 
 
 SquareGenerator::SquareGenerator(istream& in)
-: SoundGenerator(in) {
+{
+	readFrequencyVolume(in);
 	a = 0;
 	da = 1.0f / (float) ech;
 	val = 1;
-	invert = (float) (ech >> 1) / freq;
+}
+
+bool SquareGenerator::_setValue(string name, istream& in)
+{
+	if (name != "v" && name != "f")
+		return false;
+	
+	if (name=="f")
+		invert = (float) (ech >> 1) / freq;
+	
+	return true;
 }
 
 void SquareGenerator::next(float& left, float& right, float speed)
@@ -150,9 +174,20 @@ void SquareGenerator::help(Help& help) const
 }
 
 SinusGenerator::SinusGenerator(istream& in)
-: SoundGenerator(in) {
+{
+	readFrequencyVolume(in);
 	a = 0;
-	da = (2 * M_PI * freq) / (float) ech;
+}
+
+bool SinusGenerator::_setValue(string name, istream& in)
+{
+	if (name=="f")
+	{
+		in >> freq;
+		da = (2 * M_PI * freq) / (float) ech;
+		return true;
+	}
+	return false;
 }
 
 void SinusGenerator::next(float& left, float& right, float speed)
@@ -175,7 +210,8 @@ void SinusGenerator::help(Help& help) const
 	help.add(addHelpOption(new HelpEntry("sinus","sinus wave")));
 }
 
-DistortionGenerator::DistortionGenerator(istream& in) {
+DistortionGenerator::DistortionGenerator(istream& in)
+{
 	in >> level;
 	if (in.good()) generator = factory(in, true);
 

@@ -62,14 +62,14 @@ bool Oscilloscope::Buffer::fill(float left, float right)
 {
 	if (pos<size+1)
 	{
-		if (auto_threshold)
+		if (auto_threshold && pos>2)
 		{
-			if (lmax.max<left)
+			if (lmax.max<left && buffer[pos-2] < left)
 			{
 				lmax.max=left+0.02;
 				lmax.pos=pos;
 			}
-			if (rmax.max<right)
+			if (rmax.max<right && buffer[pos-1] < right)
 			{
 				rmax.max=right+0.02;
 				rmax.pos=pos+1;
