@@ -355,6 +355,12 @@ void SoundGenerator::play(SoundGenerator* generator)
 
 bool SoundGenerator::stop(SoundGenerator* generator)
 {
+	cerr << "STOP NOT IMPLEMENTED" << endl;
+	return false;
+}
+
+bool SoundGenerator::remove(SoundGenerator* generator)
+{
 	bool bRet = false;
 	mtx.lock();
 	for(auto it: list_generator)

@@ -52,8 +52,9 @@ class SoundGenerator
 
 		static void missingGeneratorExit(string msg="");
 		
-		static void play(SoundGenerator*);
+		static void play(SoundGenerator*);	// Add it if necessary
 		static bool stop(SoundGenerator*);
+		static bool remove(SoundGenerator*);	// Remove it
 		
 		// Return the number of active playing generators.
 		static uint16_t count(){ return list_generator_size; }

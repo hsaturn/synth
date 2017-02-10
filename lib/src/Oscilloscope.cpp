@@ -83,12 +83,12 @@ bool Oscilloscope::Buffer::fill(float left, float right)
 		{
 			if (lmax.max<left)
 			{
-				lmax.max=left+0.05;
+				lmax.max=left+0.02;
 				lmax.pos=pos;
 			}
 			if (rmax.max<right)
 			{
-				rmax.max=right+0.05;
+				rmax.max=right+0.02;
 				rmax.pos=pos+1;
 			}
 		}
