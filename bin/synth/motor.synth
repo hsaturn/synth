@@ -4,6 +4,8 @@ define sound
 		70 100
 		sinus 200:80
 		sq 300
+	triangle 400:10
+	square 600:10
 }
 
 reverb 30:30
