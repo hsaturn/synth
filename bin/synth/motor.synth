@@ -1,0 +1,13 @@
+define sound
+{
+	am
+		70 100
+		sinus 200:80
+		sq 300
+}
+
+reverb 30:30
+{
+	sound
+	fm 10 100 sound level 0
+}

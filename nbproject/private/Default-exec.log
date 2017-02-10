@@ -1,0 +1,12 @@
+called: /usr/bin/c++
+	/home/hsaturn/Projets/C++/synth
+	/usr/bin/c++
+	-Dsynth_EXPORTS
+	-I/home/hsaturn/Projets/C++/synth/src/lib
+	-g
+	-fPIC
+	-o
+	CMakeFiles/synth.dir/src/lib/src/libsynth.o
+	-c
+	/home/hsaturn/Projets/C++/synth/src/lib/src/libsynth.cpp
+

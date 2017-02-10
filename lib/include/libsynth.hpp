@@ -20,7 +20,7 @@
 
 using namespace std;
 
-const int BUF_LENGTH = 8192;
+const int BUF_LENGTH = 32768;
 
 class SoundGenerator
 {
@@ -53,7 +53,7 @@ class SoundGenerator
 		static void missingGeneratorExit(string msg="");
 		
 		static void play(SoundGenerator*);
-		static void stop(SoundGenerator*);
+		static bool stop(SoundGenerator*);
 		
 		// Return the number of active playing generators.
 		static uint16_t count(){ return list_generator_size; }
@@ -219,13 +219,17 @@ class WhiteNoiseGenerator : public SoundGenerator
 
 class TriangleGenerator : public SoundGenerator
 {
+	const int ASC=0;
+	const int DESC=1;
+	const int BIDIR=2;
+	
 	public:
 		TriangleGenerator() : SoundGenerator("tri triangle") {};	// factory
 
 		TriangleGenerator(istream& in);
 
 		virtual void next(float &left, float &right, float speed=1.0);
-
+		virtual void reset();
 
 	protected:
 		virtual SoundGenerator* build(istream& in) const
@@ -237,6 +241,7 @@ class TriangleGenerator : public SoundGenerator
 		float a;
 		float da;
 		int sign;
+		uint8_t dir;
 };
 
 
@@ -616,6 +621,61 @@ class ChainSound : public SoundGenerator
 		uint16_t gaps;
 		float dt;
 		float t;
+};
+
+class Oscilloscope : public SoundGenerator
+{
+	class Buffer
+	{
+		struct Max
+		{
+			float max;
+			uint32_t pos;
+		};
+		
+		public:
+			Buffer(uint32_t sz, bool auto_threshold=true);
+			
+			void resize(uint32_t sz)
+			{
+			}
+			
+			bool fill(float left, float right);
+			
+			void reset();
+			
+			~Buffer()
+			{
+				delete[] buffer;
+			}
+			
+			void render(SDL_Renderer* r, int w, int h, bool draw_left, float dx=1);
+			
+		private:
+			uint32_t size;
+			uint32_t pos;
+			float* buffer;
+			Max lmax;
+			Max rmax;
+			bool auto_threshold;
+	};
+	
+	public:
+		Oscilloscope();
+		~Oscilloscope();
+		
+		Oscilloscope(istream& in);
+		
+
+		virtual void next(float &left, float &right, float speed = 1.0);
+		virtual void Help(Help&) const {}
+		
+		virtual SoundGenerator* build(istream &in) const
+		{ return new Oscilloscope(in); }
+		
+	private:
+		Buffer* buffer;
+		SoundGenerator* sound;
 };
 
 #endif

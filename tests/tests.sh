@@ -52,8 +52,6 @@ echo "Reverb effect on bip bip"
 
 echo "Another reverb effect"
 ./synth 10000 reverb 450:90 reverb 10:80 adsr 1:80 100:0 333:0 loop sinus 440:80
-echo "And one more ..."
-./synth reverb 100:50 fm 90 100 sinus 1440:50 sinus 1.5
 
 echo "This was a great sound effect on ZX Spectrum(tm)"
 ./synth square 220 sq 222
@@ -65,5 +63,13 @@ echo "Another one"
 ./synth 30000 reverb 10:50 fm 0 100 am 0 100 wnoise triangle 39 adsr 1:0 1000:0 2000:100 5001:400 6000:400 8000:-100 9000:0 loop level 1
 ./synth 30000 reverb 10:50 fm 0 100 am 0 100 triangle 39 wnoise adsr 1:0 1000:0 2000:100 5001:400 6000:400 8000:0 9000:0 loop level 1
 ./synth 30000 reverb 30:30 fm 0 100 am 0 100 square 39:30 triangle 100 adsr 1:0 1000:0 2000:100 3001:400 6000:400 8000:0 9000:0 loop level 1 reverb 30:50 { right am 0 100 sinus 440:35 sinus 1 left am 100 0 sinus 440:34 sinus 0.5 }
+echo "Siren 1"
+./synth fm 50 100 sq 440:10 triangle 1 asc
+echo "Siren 2"
+./synth fm 0 100 reverb 100:30 fm 50 100 sin 880:30 triangle 6  sinus 1
+echo "Siren 3"
+./synth reverb 100:30 fm 50 100 sq 880:30 tri 5 asc
+echo "Siren 4"
+./synth reverb 100:50 fm 90 100 sinus 1440:50 sinus 1.5
 echo "How to modify sound in real time with the mouse for example"
 ./mousynth 20000 -b 16 reverb 300:60 fm 0 200 sq 220:20 mouse_hook 0 5

@@ -1,0 +1,320 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configurationDescriptor version="97">
+  <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
+    <logicalFolder name="Modules"
+                   displayName="Modules"
+                   projectFiles="true"
+                   root="/usr/share/cmake-3.5/Modules">
+      <itemPath>/usr/share/cmake-3.5/Modules/CMakeCCompilerABI.c</itemPath>
+      <itemPath>/usr/share/cmake-3.5/Modules/CMakeCXXCompilerABI.cpp</itemPath>
+      <itemPath>/usr/share/cmake-3.5/Modules/CMakeCompilerABI.h</itemPath>
+    </logicalFolder>
+    <df root="." name="0">
+      <df name="bin">
+        <df name="synth">
+          <df name="CMakeFiles">
+            <df name="synth.dir">
+              <in>line.cpp.o</in>
+              <in>render.cpp.o</in>
+              <in>synth.cpp.o</in>
+            </df>
+          </df>
+          <in>line.cpp</in>
+          <in>render.cpp</in>
+          <in>synth.cpp</in>
+        </df>
+      </df>
+      <df name="CMakeFiles">
+        <df name="3.5.1">
+          <df name="CompilerIdC">
+            <in>CMakeCCompilerId.c</in>
+          </df>
+          <df name="CompilerIdCXX">
+            <in>CMakeCXXCompilerId.cpp</in>
+          </df>
+        </df>
+        <df name="synth.dir">
+          <df name="src">
+            <df name="lib">
+              <df name="src">
+                <in>libsynth.o</in>
+              </df>
+            </df>
+          </df>
+        </df>
+        <in>feature_tests.c</in>
+        <in>feature_tests.cxx</in>
+      </df>
+      <df name="lib">
+        <df name="CMakeFiles">
+          <df name="libsynth.dir">
+            <df name="src">
+              <in>libsynth.o</in>
+            </df>
+          </df>
+          <df name="lsynth.dir">
+            <df name="src">
+              <in>libsynth.o</in>
+            </df>
+          </df>
+          <df name="synthesizer.dir">
+            <df name="src">
+              <in>libsynth.o</in>
+            </df>
+          </df>
+          <df name="synthetizer.dir">
+            <df name="src">
+              <in>Oscilloscope.o</in>
+              <in>SoundGenerator.o</in>
+              <in>libsynth.o</in>
+            </df>
+          </df>
+        </df>
+        <df name="src">
+          <in>Oscilloscope.cpp</in>
+          <in>SoundGenerator.cpp</in>
+          <in>libsynth.cpp</in>
+        </df>
+      </df>
+    </df>
+    <logicalFolder name="ExternalFiles"
+                   displayName="Important Files"
+                   projectFiles="false"
+                   kind="IMPORTANT_FILES_FOLDER">
+      <itemPath>Makefile</itemPath>
+      <itemPath>nbproject/private/launcher.properties</itemPath>
+    </logicalFolder>
+  </logicalFolder>
+  <sourceFolderFilter>^(nbproject)$</sourceFolderFilter>
+  <sourceRootList>
+    <Elem>.</Elem>
+  </sourceRootList>
+  <projectmakefile>Makefile</projectmakefile>
+  <confs>
+    <conf name="Default" type="0">
+      <toolsSet>
+        <compilerSet>default</compilerSet>
+        <dependencyChecking>false</dependencyChecking>
+        <rebuildPropChanged>false</rebuildPropChanged>
+      </toolsSet>
+      <flagsDictionary>
+        <element flagsID="0" commonFlags="-O4 -std=c++11"/>
+        <element flagsID="1" commonFlags="-fPIC"/>
+        <element flagsID="2" commonFlags="-fPIC -O4 -std=c++11"/>
+        <element flagsID="3" commonFlags="-fPIC -std=c++11"/>
+        <element flagsID="4" commonFlags="-std=c++14"/>
+        <element flagsID="5" commonFlags="-std=c11"/>
+      </flagsDictionary>
+      <codeAssistance>
+      </codeAssistance>
+      <makefileType>
+        <makeTool>
+          <buildCommandWorkingDir>.</buildCommandWorkingDir>
+          <buildCommand>${MAKE} -f Makefile</buildCommand>
+          <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
+          <executablePath></executablePath>
+        </makeTool>
+        <preBuild>
+          <preBuildCommandWorkingDir>.</preBuildCommandWorkingDir>
+          <preBuildCommand></preBuildCommand>
+        </preBuild>
+      </makefileType>
+      <item path="/usr/share/cmake-3.5/Modules/CMakeCCompilerABI.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="/usr/share/cmake-3.5/Modules/CMakeCXXCompilerABI.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="CMakeFiles/3.5.1/CompilerIdC/CMakeCCompilerId.c"
+            ex="false"
+            tool="0"
+            flavor2="2">
+      </item>
+      <item path="CMakeFiles/3.5.1/CompilerIdCXX/CMakeCXXCompilerId.cpp"
+            ex="false"
+            tool="1"
+            flavor2="4">
+      </item>
+      <item path="CMakeFiles/feature_tests.c" ex="false" tool="0" flavor2="10">
+        <cTool flags="5">
+          <incDir>
+            <pElem>CMakeFiles/CMakeTmp</pElem>
+          </incDir>
+        </cTool>
+      </item>
+      <item path="CMakeFiles/feature_tests.cxx" ex="false" tool="1" flavor2="11">
+        <ccTool flags="4">
+          <incDir>
+            <pElem>CMakeFiles/CMakeTmp</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="CMakeFiles/synth.dir/src/lib/src/libsynth.o"
+            ex="false"
+            tool="1"
+            flavor2="8">
+        <ccTool flags="3">
+        </ccTool>
+      </item>
+      <item path="bin/synth/CMakeFiles/synth.dir/line.cpp.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>lib/include</pElem>
+            <pElem>bin/synth</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="bin/synth/CMakeFiles/synth.dir/render.cpp.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>lib/include</pElem>
+            <pElem>bin/synth</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="bin/synth/CMakeFiles/synth.dir/synth.cpp.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool>
+          <incDir>
+            <pElem>bin/synth</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="bin/synth/line.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+          <incDir>
+            <pElem>lib/include</pElem>
+            <pElem>bin/synth</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="bin/synth/render.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+          <incDir>
+            <pElem>lib/include</pElem>
+            <pElem>bin/synth</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <item path="bin/synth/synth.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="0">
+          <incDir>
+            <pElem>lib/include</pElem>
+            <pElem>bin/synth</pElem>
+          </incDir>
+        </ccTool>
+      </item>
+      <folder path="0/CMakeFiles/synth.dir">
+        <ccTool>
+          <incDir>
+            <pElem>.</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <folder path="0/bin">
+        <ccTool>
+          <incDir>
+            <pElem>lib/include</pElem>
+            <pElem>bin/synth</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <folder path="0/lib/CMakeFiles">
+        <ccTool>
+          <incDir>
+            <pElem>lib</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <folder path="0/lib/src">
+        <ccTool>
+          <incDir>
+            <pElem>lib/include</pElem>
+            <pElem>lib</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>synthetizer_EXPORTS</Elem>
+          </preprocessorList>
+        </ccTool>
+      </folder>
+      <folder path="Modules">
+        <cTool>
+          <incDir>
+            <pElem>CMakeFiles/CMakeTmp</pElem>
+          </incDir>
+        </cTool>
+        <ccTool>
+          <incDir>
+            <pElem>CMakeFiles/CMakeTmp</pElem>
+          </incDir>
+        </ccTool>
+      </folder>
+      <item path="lib/CMakeFiles/libsynth.dir/src/libsynth.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool flags="1">
+        </ccTool>
+      </item>
+      <item path="lib/CMakeFiles/lsynth.dir/src/libsynth.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool flags="1">
+        </ccTool>
+      </item>
+      <item path="lib/CMakeFiles/synthesizer.dir/src/libsynth.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool flags="1">
+        </ccTool>
+      </item>
+      <item path="lib/CMakeFiles/synthetizer.dir/src/Oscilloscope.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool flags="1">
+        </ccTool>
+      </item>
+      <item path="lib/CMakeFiles/synthetizer.dir/src/SoundGenerator.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool flags="1">
+        </ccTool>
+      </item>
+      <item path="lib/CMakeFiles/synthetizer.dir/src/libsynth.o"
+            ex="false"
+            tool="1"
+            flavor2="4">
+        <ccTool flags="1">
+        </ccTool>
+      </item>
+      <item path="lib/src/Oscilloscope.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="2">
+        </ccTool>
+      </item>
+      <item path="lib/src/SoundGenerator.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="2">
+        </ccTool>
+      </item>
+      <item path="lib/src/libsynth.cpp" ex="false" tool="1" flavor2="8">
+        <ccTool flags="2">
+        </ccTool>
+      </item>
+    </conf>
+  </confs>
+</configurationDescriptor>
