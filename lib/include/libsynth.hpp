@@ -43,6 +43,7 @@ class SoundGenerator
 		bool setValue(string name, istream& value);
 		
 		virtual string getValue(string name) const { return "?"; };
+		virtual bool isValid() const { return true; }
 
 		static SoundGenerator* factory(istream& in, bool needed=false);
 		static string getTypes();
@@ -323,14 +324,14 @@ class DistortionGenerator : public SoundGenerator
 
 		DistortionGenerator(istream& in);
 		
-		virtual void next(float &left, float &right, float speed);
-
+		virtual void next(float &left, float &right, float speed) override;
+		virtual bool isValid() const override { return generator != 0; }
 
 	protected:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new DistortionGenerator(in); }
 
-		virtual void help(Help& help) const;
+		virtual void help(Help& help) const override;
 
 	private:
 		float level;
@@ -344,14 +345,13 @@ class LevelSound : public SoundGenerator
 
 		LevelSound(istream &in);
 
-		virtual void next(float &left, float &right, float speed=0.1);
-
+		virtual void next(float &left, float &right, float speed=0.1) override;
 
 		virtual void help(ostream &out) const
 		{ out << "level value : constant level" << endl; }
 
 	protected:
-		virtual SoundGenerator* build(istream &in) const
+		virtual SoundGenerator* build(istream &in) const override
 		{ return new LevelSound(in); }
 
 	private:
@@ -365,14 +365,17 @@ class FmGenerator : public SoundGenerator
 
 		FmGenerator(istream& in);
 
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
+		
+		virtual bool isValid() const override { return generator!=0 && modulator!=0; }
+
 
 		
 	protected:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new FmGenerator(in); }
 
-		virtual void help(Help& help) const;
+		virtual void help(Help& help) const override;
 
 	private:
 		float min;
@@ -393,14 +396,14 @@ class MixerGenerator : public SoundGenerator
 
 		MixerGenerator(istream& in);
 
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
 
 
 	protected:
-		virtual SoundGenerator* build(istream &in) const
+		virtual SoundGenerator* build(istream &in) const override
 		{ return new MixerGenerator(in); }
 
-		virtual void help(Help& help) const;
+		virtual void help(Help& help) const override;
 
 	private:
 		list<SoundGenerator*>	generators;
@@ -417,14 +420,15 @@ class LeftSound : public SoundGenerator
 			generator = factory(in, true);
 		}
 
-		virtual void next(float &left, float &right, float speed=1.0);
-
+		virtual void next(float &left, float &right, float speed=1.0) override;
+		
+		virtual bool isValid() const override { return generator!=0; }
 
 	protected:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new LeftSound(in); }
 
-		virtual void help(Help& help) const;
+		virtual void help(Help& help) const override;
 
 
 	private:
@@ -438,14 +442,15 @@ class RightSound : public SoundGenerator
 
 		RightSound(istream& in);
 
-		virtual void next(float &left, float &right, float speed=1.0);
-
+		virtual void next(float &left, float &right, float speed=1.0) override;
+		
+		virtual bool isValid() const override { return generator != 0; }
 
 	protected:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new RightSound(in); }
 
-		virtual void help(Help& help) const;
+		virtual void help(Help& help) const override;
 
 	private:
 		SoundGenerator* generator;
@@ -458,14 +463,17 @@ class EnvelopeSound : public SoundGenerator
 
 		EnvelopeSound(istream &in);
 
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
+		
+		virtual bool isValid() const override { return generator!=0; }
+
+		virtual void help(Help& help) const override;
 
 
 	protected:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new EnvelopeSound(in); }
 
-		virtual void help(Help& help) const;
 
 	private:
 		bool loop;
@@ -483,12 +491,14 @@ class MonoGenerator : public SoundGenerator
 
 		MonoGenerator(istream &in);
 
-		virtual void next(float &left, float &right, float speed = 1.0);
+		virtual void next(float &left, float &right, float speed = 1.0) override;
+		
+		virtual bool isValid() const override { return generator!=0; }
 
-		virtual void help(Help& help) const;
+		virtual void help(Help& help) const override;
 
 	protected:
-		virtual SoundGenerator* build(istream &in) const
+		virtual SoundGenerator* build(istream &in) const override
 		{ return new MonoGenerator(in); }
 
 	private:
@@ -502,12 +512,15 @@ class AmGenerator : public SoundGenerator
 
 		AmGenerator(istream &in);
 
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
+		virtual void help(Help& help) const override;
+		
+		virtual bool isValid() const override { return generator!=0 && modulator!=0; }
+
 	protected:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new AmGenerator(in); }
 
-		virtual void help(Help& help) const;
 
 	private:
 		float min;
@@ -523,12 +536,15 @@ class ReverbGenerator : public SoundGenerator
 
 		ReverbGenerator(istream& in);
 
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
+
+		virtual void help(Help& help) const override;
+		
+		virtual bool isValid() const override { return generator!=0; }
 
 	protected:
-		virtual void help(Help& help) const;
 
-		virtual SoundGenerator* build(istream &in) const
+		virtual SoundGenerator* build(istream &in) const override
 		{ return new ReverbGenerator(in); }
 
 	private:
@@ -551,12 +567,15 @@ class AvcRegulator : public SoundGenerator
 		
 		virtual void reset() { gain = 1.0; }
 		
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
 		
-		virtual void help(Help& help) const;
+		virtual bool isValid() const override { return generator!=0; }
+
+		
+		virtual void help(Help& help) const override;
 		
 	private:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new AvcRegulator(in); }
 		
 		SoundGenerator* generator;
@@ -586,19 +605,22 @@ class AdsrGenerator : public SoundGenerator
 
 		AdsrGenerator(istream& in);
 
-		virtual void reset();
+		virtual void reset() override;
 
 		bool read(istream &in, value &val);
 
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
 		
+		virtual void help(Help &) const override;
+		
+		virtual bool isValid() const override { return generator!=0; }
+
 		void setSound(SoundGenerator* sound) { generator = sound; }
 
 	protected:
-		virtual SoundGenerator* build(istream &in) const
+		virtual SoundGenerator* build(istream &in) const override
 		{ return new AdsrGenerator(in); }
 
-		virtual void help(Help &) const;
 
 	private:
 		float t;
@@ -630,14 +652,17 @@ class ChainSound : public SoundGenerator
 
 		void add(uint32_t ms, SoundGenerator* g);
 
-		virtual void reset();
+		virtual void reset() override;
 
-		virtual void next(float &left, float &right, float speed=1.0);
+		virtual void next(float &left, float &right, float speed=1.0) override;
+		
+		virtual bool isValid() const override { return adsr!=0; }
 
-		virtual void help(Help& help) const;
+
+		virtual void help(Help& help) const override;
 
 	private:
-		virtual SoundGenerator* build(istream& in) const
+		virtual SoundGenerator* build(istream& in) const override
 		{ return new ChainSound(in); }
 
 		list<ChainElement> sounds;
@@ -693,13 +718,14 @@ class Oscilloscope : public SoundGenerator
 		Oscilloscope(istream& in);
 		
 
-		virtual void next(float &left, float &right, float speed = 1.0);
-		virtual void Help(Help&) const {}
-		
-		virtual SoundGenerator* build(istream &in) const
-		{ return new Oscilloscope(in); }
+		virtual void next(float &left, float &right, float speed = 1.0) override;
+
+		virtual bool isValid() const override { return sound!=0; }
 		
 	private:
+		virtual SoundGenerator* build(istream &in) const override
+		{ return new Oscilloscope(in); }
+		
 		Buffer* buffer;
 		SoundGenerator* sound;
 };

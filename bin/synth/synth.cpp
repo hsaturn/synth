@@ -40,10 +40,12 @@ int main(int argc, const char* argv[])
 			input << arg << ' ';
 	}
 
+	bool needed = true;
 	while(input.good())
 	{
-		SoundGenerator* g = SoundGenerator::factory(input);
+		SoundGenerator* g = SoundGenerator::factory(input, needed);
 		SoundGenerator::play(g);
+		needed = false;
 	}
 
 	if (SoundGenerator::count()==0)
@@ -51,6 +53,8 @@ int main(int argc, const char* argv[])
 		cerr << "Parsing ok, but not generator list is empty" << endl;
 		exit(1);
 	}
+	else
+		cout << "Playing, sounds count = " << SoundGenerator::count() << endl;
 
 	SDL_Delay(duration); // Play for ms
 

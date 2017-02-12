@@ -15,7 +15,6 @@
             <df name="test_synth.dir">
             </df>
           </df>
-          <in>CMakeLists.txt</in>
           <in>line.cpp</in>
           <in>render.cpp</in>
           <in>synth.cpp</in>
@@ -118,8 +117,6 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
-        <gdb_signals>
-        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>

@@ -90,7 +90,19 @@ bool TriangleGenerator::_setValue(string name, istream& in)
 		return true;
 	}
 	else if (name=="f")
-		return false;
+	{
+		float f;
+		in >> f;
+		if (f <= 0)
+			cerr << "Triangle : Invalid frequency" << endl;
+		else
+		{
+			freq = f;
+			da = 4 / ((float) ech / freq);
+			return true;
+		}
+	}
+	return false;
 }
 
 void TriangleGenerator::reset()
@@ -331,11 +343,6 @@ MixerGenerator::MixerGenerator(istream& in) {
 	if (SoundGenerator::last_type != "}") {
 		cerr << "Missing } at end of mixer generator" << endl;
 		exit(1);
-	}
-	else
-	{
-		string s;	// Remove }
-		in >> s;
 	}
 }
 

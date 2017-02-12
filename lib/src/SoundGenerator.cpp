@@ -72,7 +72,6 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 					break;
 				}
 				define << item << ' ';
-				cout << "(" << item << ") ";
 			} while (brackets && in.good());
 			defines[name] = define.str();
 			
@@ -107,18 +106,22 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 				gen = factory(def,false);
 				if (gen == 0)
 				{
-					cerr << "Unable to build " << last_type << ", pleasee fix the corresponding define." << endl;
+					cerr << "Unable to build " << last_type << ", please fix the corresponding define." << endl;
 					exit(1);
 				}
 			}
 		}
-		if (gen == 0 && needed)
-			cerr << "Unknown generator : " << type << endl;
 	}
-	if (gen == 0)
+	if (needed)
 	{
-		if (needed)
+		if (gen == 0)
 			missingGeneratorExit("");
+		else if (!gen->isValid())
+		{
+			cerr << "Deleting invalid generator" << endl;
+			delete gen;
+			gen=0;
+		}
 	}
 	return gen;
 }
@@ -268,6 +271,9 @@ bool SoundGenerator::readFrequencyVolume(istream& in)
 	string note;
 	in >> s;
 	
+	if (s.length()==0)
+		return false;
+	
 	if (s.find(':')!=string::npos)
 	{
 		note = s.substr(0,s.find(':'));
@@ -338,10 +344,15 @@ void SoundGenerator::play(SoundGenerator* generator)
 {
 	if (generator == 0)
 		return;
-	mtx.lock();
-	list_generator.push_front(generator);
-	list_generator_size = list_generator.size();
-	mtx.unlock();
+	if (generator->isValid())
+	{
+		mtx.lock();
+		list_generator.push_front(generator);
+		list_generator_size = list_generator.size();
+		mtx.unlock();
+	}
+	else
+		cerr << "SoundGenerator error: skipping invalid generator play." << endl;
 }
 
 bool SoundGenerator::stop(SoundGenerator* generator)
@@ -496,7 +507,7 @@ bool SoundGenerator::setValue(string name, istream &in)
 			if (sf.find(note) != sf.end())
 				note = sf[note];
 
-			freq = atol(note.c_str());
+			freq = atof(note.c_str());
 
 			in2 << note;
 			bRet = true;

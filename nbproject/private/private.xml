@@ -10,10 +10,11 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/home/hsaturn/Projets/C++/synth/CMakeLists.txt</file>
-            <file>file:/home/hsaturn/Projets/C++/synth/src/lib/src/libsynth.cpp</file>
-            <file>file:/home/hsaturn/Projets/C++/synth/src/lib/include/libsynth.hpp</file>
-            <file>file:/home/hsaturn/Projets/C++/synth/src/example/synth.cpp</file>
+            <file>file:/home/hsaturn/Projets/C++/synth/lib/include/libsynth.hpp</file>
+            <file>file:/home/hsaturn/Projets/C++/synth/lib/src/Oscilloscope.cpp</file>
+            <file>file:/home/hsaturn/Projets/C++/synth/lib/src/SoundGenerator.cpp</file>
+            <file>file:/home/hsaturn/Projets/C++/synth/lib/src/libsynth.cpp</file>
+            <file>file:/home/hsaturn/Projets/C++/synth/bin/synth/synth.cpp</file>
         </group>
     </open-files>
 </project-private>
