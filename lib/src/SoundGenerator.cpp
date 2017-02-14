@@ -74,7 +74,6 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 				define << item << ' ';
 			} while (brackets && in.good());
 			defines[name] = define.str();
-			
 			gen = factory(in, needed);
 		}
 		else

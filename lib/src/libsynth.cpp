@@ -781,7 +781,6 @@ void AvcRegulator::next(float& left, float& right, float sp)
 		if (l>0.95 || l<-0.95 || r>0.95 || r<-0.95)
 		{
 			gain *= speed;
-			cout << "GAIN : " << gain << " speed=" << speed << endl;
 			if (gain < min_gain)
 				gain = min_gain;
 		}
