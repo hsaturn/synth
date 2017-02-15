@@ -1,4 +1,7 @@
 #include "libsynth.hpp"
+#include <algorithm>
+
+using namespace std;
 
 extern uint32_t ech;
 
@@ -78,7 +81,7 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 		}
 		else
 		{
-			cerr << "missing name" << endl;
+			cerr << "libsynth, ERROR missing name" << endl;
 			exit(1);
 		}
 	}
@@ -91,7 +94,7 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 			gen = it->second->build(in);
 			if (gen == 0)
 			{
-				cerr << "Unable to build " << last_type << endl;
+				cerr << "libsynth, ERROR Unable to build " << last_type << endl;
 				exit(1);
 			}
 		}
@@ -105,7 +108,7 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 				gen = factory(def,false);
 				if (gen == 0)
 				{
-					cerr << "Unable to build " << last_type << ", please fix the corresponding define." << endl;
+					cerr << "libsynth, ERROR Unable to build " << last_type << ", please fix the corresponding define." << endl;
 					exit(1);
 				}
 			}
@@ -117,7 +120,7 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 			missingGeneratorExit("");
 		else if (!gen->isValid())
 		{
-			cerr << "Deleting invalid generator" << endl;
+			cerr << "libsynth, ERROR Deleting invalid generator" << endl;
 			delete gen;
 			gen=0;
 		}
@@ -147,16 +150,17 @@ SoundGenerator::SoundGenerator(string name)
 void SoundGenerator::audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength)
 {
 	mtx.lock();
-	if (list_generator_size)
-	{
-		uint32_t ech = byteStreamLength / sizeof(int16_t);
-		int16_t* stream =  reinterpret_cast<int16_t*>( byteStream );
-		uint32_t i;
+	uint32_t ech = byteStreamLength / sizeof(int16_t);
+	int16_t* stream =  reinterpret_cast<int16_t*>( byteStream );
+	uint32_t i;
 
-		for (i = 0; i < ech; i+=2)
+	for (i = 0; i < ech; i+=2)
+	{
+		if (list_generator_size)
 		{
 			float left = 0;
 			float right = 0;
+	
 			for(auto generator: list_generator)
 				generator->next(left, right);
 
@@ -182,6 +186,11 @@ void SoundGenerator::audioCallback(void *unused, Uint8 *byteStream, int byteStre
 			}
 			stream[i] = 32767 * left / list_generator_size;
 			stream[i+1] = 32767 * right / list_generator_size;
+		}
+		else
+		{
+			stream[i] = 0;
+			stream[i+1] = 0;
 		}
 	}
 	mtx.unlock();
@@ -326,9 +335,9 @@ void SoundGenerator::help()
 void SoundGenerator::missingGeneratorExit(string msg)
 {
 	if (last_type.length())
-		cerr << "Unknown generator type (" << last_type << ")" << endl;
+		cerr << "libsynth, ERROR Unknown generator type (" << last_type << ")" << endl;
 	else
-		cerr << "Missing generator" << endl;
+		cerr << "libsynth, ERROR Missing generator" << endl;
 	if (msg.length())
 		cerr << msg;
 	exit(1);
@@ -339,6 +348,19 @@ void SoundGenerator::help(Help& help) const
 	cout << "freq[:volume] (not in help system)" << endl;;
 }
 
+bool SoundGenerator::has(SoundGenerator* generator, bool lock)
+{
+	bool bRet;
+	if (lock) mtx.lock();
+	auto it=find(list_generator.begin(), list_generator.end(), generator);
+	if (it == list_generator.end())
+		bRet = false;
+	else
+		bRet = true;
+	if (lock) mtx.unlock();
+	return bRet;
+}
+
 void SoundGenerator::play(SoundGenerator* generator)
 {
 	if (generator == 0)
@@ -346,17 +368,21 @@ void SoundGenerator::play(SoundGenerator* generator)
 	if (generator->isValid())
 	{
 		mtx.lock();
-		list_generator.push_front(generator);
+		if (has(generator, false)==false)
+			list_generator.push_back(generator);
 		list_generator_size = list_generator.size();
+		cerr << "libsynth, INFO: play size=" << list_generator_size << endl;
 		mtx.unlock();
 	}
 	else
-		cerr << "SoundGenerator error: skipping invalid generator play." << endl;
+		cerr << "libsynth ERROR: skipping invalid generator play." << endl;
 }
 
 bool SoundGenerator::stop(SoundGenerator* generator)
 {
-	cerr << "STOP NOT IMPLEMENTED" << endl;
+	
+	cerr << "libsynth, WARNING: STOP NOT IMPLEMENTED" << endl;
+	remove(generator);
 	return false;
 }
 
@@ -364,15 +390,15 @@ bool SoundGenerator::remove(SoundGenerator* generator)
 {
 	bool bRet = false;
 	mtx.lock();
-	for(auto it: list_generator)
+	if (has(generator, false))
 	{
-		if (it == generator)
-		{
-			bRet = true;
-			list_generator.remove(it);
-			break;
-		}
+		bRet = true;
+		list_generator.remove(generator);
+		list_generator_size = list_generator.size();
+		cerr << "libsynth, INFO: remove size=" << list_generator_size << endl;
 	}
+	else
+		cerr << "libsynth, WARNING : Unable to remove sound generator " << generator << ", size=" << list_generator_size << endl;
 	mtx.unlock();
 	return bRet;
 }
@@ -522,6 +548,6 @@ bool SoundGenerator::setValue(string name, istream &in)
 
 bool SoundGenerator::_setValue(string name, istream& value)
 {
-	cerr << "libsynth Warning: _setValue(" << name << ", istream&) not handled." << endl;
+	cerr << "libsynth WARNING: _setValue(" << name << ", istream&) not handled." << endl;
 	return false;
 }

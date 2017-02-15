@@ -20,7 +20,7 @@ bool					SoundGenerator::echo=true;
 bool					SoundGenerator::init_done = false;
 SDL_AudioDeviceID		SoundGenerator::dev;
 list<SoundGenerator*>	SoundGenerator::list_generator;
-uint16_t				SoundGenerator::list_generator_size;	// avoid mx use
+uint16_t				SoundGenerator::list_generator_size=0;	// avoid mx use
 uint16_t				SoundGenerator::buf_size;
 bool					SoundGenerator::saturate = false;
 mutex					SoundGenerator::mtx;

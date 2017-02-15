@@ -212,6 +212,7 @@
         <ccTool flags="0">
           <incDir>
             <pElem>lib/include</pElem>
+            <pElem>bin/synth</pElem>
           </incDir>
         </ccTool>
       </item>
