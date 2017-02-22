@@ -20,12 +20,10 @@
 
 using namespace std;
 
-const int BUF_LENGTH = 32768;
-
 class SoundGenerator
 {
-	public:
-		static bool init(uint16_t wanted_buf_size=2048);
+            public:
+		static bool init();
 		
 		static void quit();
 		
@@ -66,6 +64,8 @@ class SoundGenerator
 		
 		// Return the number of active playing generators.
 		static uint16_t count(){ return list_generator_size; }
+                
+                static uint32_t samplesPerSeconds() { return samples_per_seconds; }
 		
 		static uint16_t bufSize() { return buf_size; }
 
@@ -80,6 +80,7 @@ class SoundGenerator
 				static const flag_type MS_VOL = 16;		// Time in ms (float) / Volume in % couple.
 				static const flag_type FREQ_VOL = 32;	// Frequency in HZ (float) / Volume in % couple.
 				static const flag_type CHOICE = 64;		// Dropdown List of fixed values (*MUST* appear at beginning of arg_desc with the format [opt1|opt2...]
+				static const flag_type FREQUENCY = 128;
 				
 				HelpOption(string arg_name, string arg_desc, flag_type opt_flags=0) : name(arg_name), desc(arg_desc), flags(opt_flags){};
 				
@@ -182,6 +183,8 @@ class SoundGenerator
 		static mutex mtx;
 		static uint16_t buf_size;
 		static bool saturate;
+		static uint32_t wanted_buffer_size;
+                static uint32_t samples_per_seconds;
 };
 
 template<class T>
@@ -368,7 +371,7 @@ class FmGenerator : public SoundGenerator
 
 		virtual void next(float &left, float &right, float speed=1.0) override;
 		
-		virtual bool isValid() const override { return generator!=0 && modulator!=0; }
+		virtual bool isValid() const override { return sound!=0 && modulator!=0; }
 
 
 		
@@ -381,8 +384,7 @@ class FmGenerator : public SoundGenerator
 	private:
 		float min;
 		float max;
-		float a;
-		SoundGenerator* generator;
+		SoundGenerator* sound;
 		SoundGenerator* modulator;
 		float last_ech_left;
 		float last_ech_right;
@@ -583,6 +585,32 @@ class AvcRegulator : public SoundGenerator
 		float speed;
 		float gain;
 		float min_gain;
+};
+
+class LowFilter : public SoundGenerator
+{
+	public:
+		LowFilter() : SoundGenerator("lowf"){}
+		
+		LowFilter(istream& in);
+		
+		virtual void next(float &left, float &right, float speed=1.0);
+	
+		void setFreq(float f);
+		
+	protected:
+		virtual SoundGenerator* build(istream& in) const
+		{ return new LowFilter(in); }
+		
+		
+		virtual void help(Help& help) const;
+		
+		float lleft;
+		float lright;
+		float dmax;
+		float mdmax;
+                
+                SoundGenerator* generator;
 };
 
 class AdsrGenerator : public SoundGenerator
