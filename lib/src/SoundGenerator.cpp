@@ -3,14 +3,13 @@
 
 using namespace std;
 
-extern uint32_t ech;
+extern uint32_t samples_per_seconds;
 
 // Frequencies list
 static map<string, float> sf;
 
 SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 {
-	init();
 	SoundGenerator* gen=0;
 	last_type="";
 	string type;
@@ -25,7 +24,8 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 			getline(in, s);
 		}
 	}
-	
+    cout << "type=" << type << endl;
+
 	if (type.find(".synth") != string::npos)	// assume a file
 		{
 		ifstream file(type);
@@ -46,11 +46,27 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 	}
 	else if (type == "-b")
 	{
-		unsigned long buf_length;
-		in >> buf_length;
-		cerr << "Unable to modify buf_length now :-(" << endl;
+		uint32_t buffer_size;
+		in >> buffer_size;
+		if (init_done)
+			cerr << "Unable to change buffer length once sound is played. :-(" << endl;
+		else
+			wanted_buffer_size = buffer_size;
+        cout << "WB" << wanted_buffer_size << endl;
+		
 		return factory(in, needed);
 	}
+    else if (type == "-s")
+    {
+		uint32_t spf;
+		in >> spf;
+		if (init_done)
+			cerr << "Unable to change samples per second once sound engine has started. :-(" << endl;
+		else
+			samples_per_seconds = spf;
+		
+		return factory(in, needed);
+    }
 	else if (type=="define")
 	{
 		string name;
@@ -196,7 +212,7 @@ void SoundGenerator::audioCallback(void *unused, Uint8 *byteStream, int byteStre
 	mtx.unlock();
 }
 
-bool SoundGenerator::init(uint16_t wanted_buffer_size)
+bool SoundGenerator::init()
 {
 	if (init_done)
 		return true;
@@ -211,10 +227,10 @@ bool SoundGenerator::init(uint16_t wanted_buffer_size)
 	SDL_AudioSpec want, have;
 
 	SDL_memset(&want, 0, sizeof(want)); /* or SDL_zero(want) */
-	want.freq = ech;
+	want.freq = samples_per_seconds;
 	want.format = AUDIO_S16SYS;
 	want.channels = 2;
-	want.samples = 1024;
+	want.samples = wanted_buffer_size;
 	want.callback = audioCallback;
 
 	dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
@@ -227,6 +243,8 @@ bool SoundGenerator::init(uint16_t wanted_buffer_size)
 		SDL_PauseAudioDevice(dev, 0); /* start audio playing. */
 	}
 	buf_size = have.samples;
+    cout << "SAMPLES " << have.samples << " /s " << have.freq << endl;
+    samples_per_seconds = have.freq;
 	init_done = true;
 	return true;
 }
@@ -317,9 +335,12 @@ SoundGenerator::HelpEntry* SoundGenerator::addHelpOption(HelpEntry* entry) const
 	return entry;
 }
 
-void SoundGenerator::help()
+void SoundGenerator::help()	// @FIXME memory leak if called many times
 {
 	Help help;
+	help.add(new HelpEntry("-b","Change sound buffer length, default: "+to_string(wanted_buffer_size)));
+    help.add(new HelpEntry("-s","Number of samples per seconds, default: "+to_string(samples_per_seconds)));
+    
 	map<const SoundGenerator*, bool>	done;
 	for(auto generator : generators)
 	{
@@ -345,7 +366,8 @@ void SoundGenerator::missingGeneratorExit(string msg)
 
 void SoundGenerator::help(Help& help) const
 {
-	cout << "freq[:volume] (not in help system)" << endl;;
+	cout << "freq[:volume] (@FIXME not a right place)" << endl;	// FIXME
+
 }
 
 bool SoundGenerator::has(SoundGenerator* generator, bool lock)
@@ -363,6 +385,7 @@ bool SoundGenerator::has(SoundGenerator* generator, bool lock)
 
 void SoundGenerator::play(SoundGenerator* generator)
 {
+	init();
 	if (generator == 0)
 		return;
 	if (generator->isValid())
