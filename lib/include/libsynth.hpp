@@ -358,8 +358,9 @@ class TriangleGenerator : public SoundGenerator
   private:
 	float a;
 	float da;
-	float mda;	// positive steps
-	float pda;	// negative steps
+	float asc_da;		// negative steps
+	float desc_da;		// negative steps
+	float ton;
 	uint8_t dir;
 };
 
@@ -786,24 +787,39 @@ class AvcRegulator : public SoundGenerator
 	float min_gain;
 };
 
-class LowFilter : public SoundGenerator
+class Filter : public SoundGenerator
 {
   public:
-
-	LowFilter() : SoundGenerator("lowf") { }
-	LowFilter(istream& in);
-
-	virtual void next(float &left, float &right, float speed = 1.0);
-
+	Filter(const string &name) : SoundGenerator(name){}
+	Filter(istream& in);
+	
 	virtual bool isValid() const override
 	{
 		return generator != 0;
 	}
-
-	void setFreq(float f);
-
+	virtual void next(float &left, float &right, float speed = 1.0);
+	
   protected:
+	Filter();
+	
+	SoundGenerator* generator;
+	float lleft;
+	float lright;
+	float coeff;
+	float mcoeff;	// 1.0 - coeff
+};
 
+class LowFilter : public Filter
+{
+  public:
+
+	LowFilter() : Filter("low") { }
+	LowFilter(istream& in) : Filter(in) {}
+	
+	void next(float& left, float& right, float speed=1.0);
+	
+  protected:
+	
 	virtual SoundGenerator* build(istream& in) const
 	{
 		return new LowFilter(in);
@@ -811,14 +827,28 @@ class LowFilter : public SoundGenerator
 
 	virtual void help(Help& help) const;
 
-	float lleft;
-	float lright;
-	float dmax;
-	float mdmax;
 
-	SoundGenerator* generator;
 };
 
+class HighFilter : public Filter
+{
+  public:
+
+	HighFilter() : Filter("high") { }
+	HighFilter(istream& in);
+	void next(float& left, float& right, float speed=1.0);
+
+  protected:
+	
+	virtual SoundGenerator* build(istream& in) const
+	{
+		return new HighFilter(in);
+	}
+
+	virtual void help(Help& help) const;
+
+
+};
 class AdsrGenerator : public SoundGenerator
 {
 

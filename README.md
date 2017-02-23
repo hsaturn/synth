@@ -54,6 +54,7 @@ Any combinaison of arbitrary number of these :
 * white noise
 * reverberation / echo
 * low / high / band filter (in progress)
+* clamp
 
 * frequency modulation (any signal)
 * amplitude modulation (any signal)

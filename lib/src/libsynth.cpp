@@ -45,7 +45,8 @@ static MonoGenerator gen_mono;
 static AvcRegulator gen_avc;
 static ChainSound gen_chain;
 static Oscilloscope gen_osc;
-static LowFilter gen_lowf;
+static LowFilter gen_low;
+static HighFilter gen_high;
 static TriangleGenerator gen_tri;
 static ClampSound gen_clamp;
 
