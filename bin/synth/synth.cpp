@@ -53,8 +53,8 @@ int main(int argc, const char* argv[])
 		cerr << "Parsing ok, but not generator list is empty" << endl;
 		exit(1);
 	}
-	else
-		cout << "Playing, sounds count = " << SoundGenerator::count() << endl;
+	//else
+	//	cout << "Playing, sounds count = " << SoundGenerator::count() << endl;
 
 	SDL_Delay(duration); // Play for ms
 

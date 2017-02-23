@@ -5,7 +5,7 @@ Oscilloscope::Oscilloscope::Buffer::Buffer(uint32_t sz, bool auto_thr)
 : size(sz), auto_threshold(auto_thr)
 {
 	pos=0;
-	buffer = new float[2*sz];
+	buffer = new sgfloat [2*sz];
 }
 
 void Oscilloscope::Oscilloscope::Buffer::reset()
@@ -15,7 +15,7 @@ void Oscilloscope::Oscilloscope::Buffer::reset()
 	rmax.max = -9e9;
 }
 
-void Oscilloscope::Oscilloscope::Buffer::render(SDL_Renderer* r, int w, int h, bool draw_left, float dx)
+void Oscilloscope::Oscilloscope::Buffer::render(SDL_Renderer* r, int w, int h, bool draw_left, sgfloat  dx)
 {
 	int half = h/2;
 	int coeff = (h-25)/2;
@@ -29,7 +29,7 @@ void Oscilloscope::Oscilloscope::Buffer::render(SDL_Renderer* r, int w, int h, b
 	else
 		p=rmax.pos;
 
-	float x=0;
+	sgfloat  x=0;
 
 	int lastx=-1;
 	int lasty=-1;
@@ -58,7 +58,7 @@ void Oscilloscope::Oscilloscope::Buffer::render(SDL_Renderer* r, int w, int h, b
 	}
 }
 
-bool Oscilloscope::Buffer::fill(float left, float right)
+bool Oscilloscope::Buffer::fill(sgfloat  left, sgfloat  right)
 {
 	if (pos<size+1)
 	{
@@ -107,10 +107,10 @@ Oscilloscope::Oscilloscope(istream& in)
 	}
 }
 
-void Oscilloscope::next(float& left, float& right, float speed)
+void Oscilloscope::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-	float l=0;
-	float r=0;
+	sgfloat  l=0;
+	sgfloat  r=0;
 
 	sound->next(l,r,speed);
 	left += l;

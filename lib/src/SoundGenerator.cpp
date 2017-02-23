@@ -5,8 +5,11 @@ using namespace std;
 
 extern uint32_t samples_per_seconds;
 
+
 // Frequencies list
-static map<string, float> sf;
+static map<string, sgfloat > sf;
+
+SDL_AudioSpec SoundGenerator::have;
 
 SoundGenerator* SoundGenerator::factory(string s)
 {
@@ -31,7 +34,6 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 			getline(in, s);
 		}
 	}
-	cout << "type=" << type << endl;
 
 	if (type.find(".synth") != string::npos)	// assume a file
 	{
@@ -181,8 +183,8 @@ void SoundGenerator::audioCallback(void *unused, Uint8 *byteStream, int byteStre
 	{
 		if (list_generator_size)
 		{
-			float left = 0;
-			float right = 0;
+			sgfloat  left = 0;
+			sgfloat  right = 0;
 
 			for (auto generator : list_generator)
 				generator->next(left, right);
@@ -231,7 +233,7 @@ bool SoundGenerator::init()
 	}
 	dev = 0;
 	std::atexit(SoundGenerator::quit);
-	SDL_AudioSpec want, have;
+	SDL_AudioSpec want;
 
 	SDL_memset(&want, 0, sizeof (want)); /* or SDL_zero(want) */
 	want.freq = samples_per_seconds;
@@ -254,7 +256,6 @@ bool SoundGenerator::init()
 		SDL_PauseAudioDevice(dev, 0); /* start audio playing. */
 	}
 	buf_size = have.samples;
-	cout << "SAMPLES " << have.samples << " /s " << have.freq << endl;
 	samples_per_seconds = have.freq;
 	init_done = true;
 	return true;
@@ -290,7 +291,7 @@ bool SoundGenerator::readFrequencyVolume(istream& in)
 			stringstream note;
 			note << row;
 
-			float freq;
+			sgfloat  freq;
 			note >> freq;
 			if (freq)
 			{
@@ -336,9 +337,9 @@ string SoundGenerator::getTypes()
 	return s;
 }
 
-float SoundGenerator::rand()
+sgfloat  SoundGenerator::rand()
 {
-	return (float) ::rand() / ((float) RAND_MAX / 2) - 1.0;
+	return (sgfloat ) ::rand() / ((sgfloat ) RAND_MAX / 2) - 1.0;
 }
 
 SoundGenerator::HelpEntry* SoundGenerator::addHelpOption(HelpEntry* entry) const
@@ -406,7 +407,6 @@ void SoundGenerator::play(SoundGenerator* generator)
 		if (has(generator, false) == false)
 			list_generator.push_back(generator);
 		list_generator_size = list_generator.size();
-		cerr << "libsynth, INFO: play size=" << list_generator_size << endl;
 		mtx.unlock();
 	}
 	else
@@ -430,7 +430,6 @@ bool SoundGenerator::remove(SoundGenerator* generator)
 		bRet = true;
 		list_generator.remove(generator);
 		list_generator_size = list_generator.size();
-		cerr << "libsynth, INFO: remove size=" << list_generator_size << endl;
 	}
 	else
 		cerr << "libsynth, WARNING : Unable to remove sound generator " << generator << ", size=" << list_generator_size << endl;
@@ -530,7 +529,7 @@ string SoundGenerator::HelpOption::str() const
 	return str;
 }
 
-bool SoundGenerator::setValue(string name, float value)
+bool SoundGenerator::setValue(string name, sgfloat  value)
 {
 	stringstream in;
 	in << value;
@@ -602,4 +601,40 @@ bool SoundGenerator::eatWord(istream& in, string expected)
 	in.clear();
 	in.seekg(last);
 	return false;
+}
+
+sgfloat  SoundGenerator::readFloat(istream& in, sgfloat  min, sgfloat  max, string varname)
+{
+	char c;
+	if (min>max)
+	{
+		cerr << "DEV ERROR: min > max " << min << "/" << max << " for " << varname << endl;
+		return max;
+	}
+	if (in.good())
+	{
+		c = in.peek();
+		if (c!='.' && c<='0' && c>='9')
+		{
+			cerr << "ERROR: Expecting float for '" << varname << "' value.";
+			return max;
+		}
+		sgfloat  f;
+		in >> f;
+		if (f>max || f<min) cerr << "WARNING: " << varname << '=' << f << " out of range [" << min << "-" << max << "] !" << endl;
+		if (f<min) f=min;
+		if (f>max) f=max;
+		return f;
+	}
+	return max;
+
+}
+
+sgfloat SoundGenerator::readFrequency(istream& in)
+{
+	sgfloat f;
+	in >> f;
+	if (f<0 || f>200000.0)
+		cerr << "ERROR: Invalid frequency : " << f << endl;
+	return f;
 }

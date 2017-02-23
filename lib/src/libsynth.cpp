@@ -54,7 +54,7 @@ SquareGenerator::SquareGenerator(istream& in)
 {
     readFrequencyVolume(in);
     a = 0;
-    da = 1.0f / (float) SoundGenerator::samplesPerSeconds() ;
+    da = 1.0f / (sgfloat ) SoundGenerator::samplesPerSeconds() ;
     val = 1;
 }
 
@@ -64,16 +64,16 @@ bool SquareGenerator::_setValue(string name, istream& in)
         return false;
 
     if (name == "f")
-        invert = (float) (SoundGenerator::samplesPerSeconds()  >> 1) / freq;
+        invert = (sgfloat ) (SoundGenerator::samplesPerSeconds()  >> 1) / freq;
 
     return true;
 }
 
-void SquareGenerator::next(float& left, float& right, float speed)
+void SquareGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     a += speed;
-    left += (float) val * volume;
-    right += (float) val * volume;
+    left += (sgfloat ) val * volume;
+    right += (sgfloat ) val * volume;
     if (a > invert)
     {
         a -= invert;
@@ -97,18 +97,18 @@ bool SinusGenerator::_setValue(string name, istream& in)
     if (name == "f")
     {
         in >> freq;
-        da = (2 * M_PI * freq) / (float) SoundGenerator::samplesPerSeconds() ;
+        da = (2 * M_PI * freq) / (sgfloat ) SoundGenerator::samplesPerSeconds() ;
         return true;
     }
     return false;
 }
 
-void SinusGenerator::next(float& left, float& right, float speed)
+void SinusGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     static int count = 0;
     count++;
     a += da * speed;
-    float s = sin(a);
+    sgfloat  s = sin(a);
     left += volume * s;
     right += volume * s;
     if (a > 2 * M_PI)
@@ -125,15 +125,13 @@ void SinusGenerator::help(Help& help) const
 
 DistortionGenerator::DistortionGenerator(istream& in)
 {
-    in >> level;
-    if (in.good()) generator = factory(in, true);
-
-    level = level / 100 + 1.0f;
+	level = 1.0f + readFloat(in, 0, 100, "level")/100.0f;
+    generator = factory(in, true);
 }
 
-void DistortionGenerator::next(float& left, float& right, float speed)
+void DistortionGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    float l, r;
+    sgfloat  l, r;
     generator->next(l, r, speed);
     l *= level;
     r *= level;
@@ -158,10 +156,10 @@ void DistortionGenerator::help(Help& help) const
 
 LevelSound::LevelSound(istream& in)
 {
-    in >> level;
+	level = readFloat(in, 0, 100, "level") / 100.0f;
 }
 
-void LevelSound::next(float& left, float& right, float speed)
+void LevelSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     left += level;
     right += level;
@@ -210,7 +208,7 @@ FmGenerator::FmGenerator(istream& in)
     min /= 100.0;
 }
 
-void FmGenerator::next(float& left, float& right, float speed)
+void FmGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     if (min == max)
     {
@@ -218,7 +216,7 @@ void FmGenerator::next(float& left, float& right, float speed)
         return;
     }
 
-    float l = 0, r = 0;
+    sgfloat  l = 0, r = 0;
     modulator->next(l, r, mod_mod ? speed : 1.0); // nbre entre -1 et 1
 
     l = (l + r) / 2.0;
@@ -258,7 +256,7 @@ MixerGenerator::MixerGenerator(istream& in)
     }
 }
 
-void MixerGenerator::next(float& left, float& right, float speed)
+void MixerGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     if (generators.size() == 0)
         return;
@@ -268,8 +266,8 @@ void MixerGenerator::next(float& left, float& right, float speed)
         return;
     }
 
-    float l = 0;
-    float r = 0;
+    sgfloat  l = 0;
+    sgfloat  r = 0;
 
     for (auto generator : generators)
         generator->next(l, r, speed);
@@ -285,9 +283,9 @@ void MixerGenerator::help(Help& help) const
     help.add(entry);
 }
 
-void LeftSound::next(float& left, float& right, float speed)
+void LeftSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    float v = 0;
+    sgfloat  v = 0;
     generator->next(left, v);
 }
 
@@ -303,9 +301,9 @@ RightSound::RightSound(istream& in)
     generator = factory(in, true);
 }
 
-void RightSound::next(float& left, float& right, float speed)
+void RightSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    float v = 0;
+    sgfloat  v = 0;
     generator->next(v, right);
 }
 
@@ -363,7 +361,7 @@ EnvelopeSound::EnvelopeSound(istream& in)
         // this->help(cerr); @TODO
         exit(1);
     }
-    float v;
+    sgfloat  v;
     while (input->good())
     {
         string s;
@@ -381,36 +379,36 @@ EnvelopeSound::EnvelopeSound(istream& in)
     }
     generator = factory(in, true);
 
-    dindex = 1000.0 * (data.size() - 1) / (float) ms / SoundGenerator::samplesPerSeconds() ;
+    dindex = 1000.0 * (data.size() - 1) / (sgfloat ) ms / SoundGenerator::samplesPerSeconds() ;
 }
 
-void EnvelopeSound::next(float& left, float& right, float speed)
+void EnvelopeSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     if (index > data.size())
         return;
 
-    float l = 0;
-    float r = 0;
+    sgfloat  l = 0;
+    sgfloat  r = 0;
     generator->next(l, r, speed);
 
     index += dindex;
 
     int idx = (int) index;
-    float dec = index - idx;
+    sgfloat  dec = index - idx;
 
     if (idx < 0) idx = 0;
-    if (index >= (float) data.size() - 1)
+    if (index >= (sgfloat ) data.size() - 1)
     {
         idx = data.size() - 1;
         if (loop)
-            index -= (float) data.size() - 1;
+            index -= (sgfloat ) data.size() - 1;
     }
-    float cur = data[idx];
+    sgfloat  cur = data[idx];
     if (idx + 1 < (int) data.size())
         idx++;
-    float next = data[idx];
+    sgfloat  next = data[idx];
 
-    float f = cur + (next - cur) * dec;
+    sgfloat  f = cur + (next - cur) * dec;
 
     left += l*f;
     right += r*f;
@@ -423,7 +421,7 @@ void EnvelopeSound::help(Help& help) const {
     entry->addExample("envelope 1000:100 1500:50");
     out << "envelope {timems} [once|loop] {data} generator" << endl;
     out << "  data is either : file filename, or data v1 ... v2 end" << endl;
-    out << "  values are from -200 to 200 (float, >100 may distort sound)" << endl;
+    out << "  values are from -200 to 200 (gfloat , >100 may distort sound)" << endl;
      * */ }
 
 MonoGenerator::MonoGenerator(istream& in)
@@ -431,10 +429,10 @@ MonoGenerator::MonoGenerator(istream& in)
     generator = factory(in, true);
 }
 
-void MonoGenerator::next(float& left, float& right, float speed)
+void MonoGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    float l = 0;
-    float v = 0;
+    sgfloat  l = 0;
+    sgfloat  v = 0;
     generator->next(l, v, speed);
     l = (l + v) / 2;
     left += l;
@@ -450,28 +448,19 @@ void MonoGenerator::help(Help& help) const
 
 AmGenerator::AmGenerator(istream& in)
 {
-    in >> min;
-    in >> max;
+	min = readFloat(in, 0, 300, "min") / 100.0;
+	max = readFloat(in, 0, 300, "max") / 100.0;
 
-    if (in.good()) generator = factory(in, true);
+    generator = factory(in, true);
     if (in.good()) modulator = factory(in, true);
-
-    if (min < -200 || min > 200 || max < -200 || max > 200)
-    {
-        cerr << "Out of range (0..200)" << endl;
-        exit(1);
-    }
-
-    max /= 100.0;
-    min /= 100.0;
 }
 
-void AmGenerator::next(float& left, float& right, float speed)
+void AmGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    float l = 0, r = 0;
+    sgfloat  l = 0, r = 0;
     generator->next(l, r, speed);
 
-    float lv = 0, rv = 0;
+    sgfloat  lv = 0, rv = 0;
     modulator->next(lv, rv, speed);
 
     lv = min + (max - min)*(lv + 1) / 2;
@@ -504,7 +493,7 @@ ReverbGenerator::ReverbGenerator(istream& in)
         cerr << "Missing :  in " << SoundGenerator::last_type << " generator." << endl;
         exit(1);
     }
-    float ms = atof(s.c_str()) / 1000.0;
+    sgfloat  ms = atof(s.c_str()) / 1000.0;
     s.erase(0, s.find(':') + 1);
     vol = atof(s.c_str()) / 100.0;
 
@@ -522,8 +511,8 @@ ReverbGenerator::ReverbGenerator(istream& in)
         exit(1);
     }
 
-    buf_left = new float[buf_size];
-    buf_right = new float[buf_size];
+    buf_left = new sgfloat [buf_size];
+    buf_right = new sgfloat [buf_size];
     for (uint32_t i = 0; i < buf_size; i++)
     {
         buf_left[i] = 0;
@@ -536,16 +525,16 @@ ReverbGenerator::ReverbGenerator(istream& in)
     generator = factory(in, true);
 }
 
-void ReverbGenerator::next(float& left, float& right, float speed)
+void ReverbGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    float l = 0;
-    float r = 0;
+    sgfloat  l = 0;
+    sgfloat  r = 0;
     generator->next(l, r, speed);
 
     if (echo)
     {
-        float ll = buf_left[index];
-        float rr = buf_right[index];
+        sgfloat  ll = buf_left[index];
+        sgfloat  rr = buf_right[index];
 
         buf_left[index] = l;
         buf_right[index] = r;
@@ -603,7 +592,7 @@ AdsrGenerator::AdsrGenerator(istream& in)
     }
 
     generator = factory(in, true);
-    dt = 1.0 / (float) SoundGenerator::samplesPerSeconds() ;
+    dt = 1.0 / (sgfloat ) SoundGenerator::samplesPerSeconds() ;
     reset();
 }
 
@@ -642,13 +631,13 @@ bool AdsrGenerator::read(istream& in, value& val)
     return true;
 }
 
-void AdsrGenerator::next(float& left, float& right, float speed)
+void AdsrGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     if (generator == 0)
         return;
 
-    float l = 0;
-    float r = 0;
+    sgfloat  l = 0;
+    sgfloat  r = 0;
     generator->next(l, r, speed);
 
     if (index >= values.size())
@@ -672,8 +661,8 @@ void AdsrGenerator::next(float& left, float& right, float speed)
         }
     }
 
-    float factor = (t - previous.s) / (target.s - previous.s);
-    float vol = previous.vol + (target.vol - previous.vol) * factor;
+    sgfloat  factor = (t - previous.s) / (target.s - previous.s);
+    sgfloat  vol = previous.vol + (target.vol - previous.vol) * factor;
 
     left += l*vol;
     right += r*vol;
@@ -700,12 +689,12 @@ AvcRegulator::AvcRegulator(istream& in)
     reset();
 }
 
-void AvcRegulator::next(float& left, float& right, float sp)
+void AvcRegulator::next(sgfloat & left, sgfloat & right, sgfloat  sp)
 {
     if (generator)
     {
-        float l = 0;
-        float r = 0;
+        sgfloat  l = 0;
+        sgfloat  r = 0;
         generator->next(l, r, sp);
 
         l *= gain;
@@ -807,7 +796,7 @@ ChainSound::ChainSound(istream& in)
             }
         }
     }
-    dt = 1.0 / (float) SoundGenerator::samplesPerSeconds() ;
+    dt = 1.0 / (sgfloat ) SoundGenerator::samplesPerSeconds() ;
     reset();
 }
 
@@ -825,7 +814,7 @@ void ChainSound::reset()
         adsr->setSound(it->sound);
 }
 
-void ChainSound::next(float& left, float& right, float speed)
+void ChainSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     if (it != sounds.end())
     {

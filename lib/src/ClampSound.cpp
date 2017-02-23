@@ -3,7 +3,7 @@
 
 ClampSound::ClampSound(istream& in)
 {
-	in >> level;
+	level = fabs(readFloat(in, 0, 100, "level")/100.0);
 	generator = factory(in, true);
 
 	init();
@@ -11,22 +11,14 @@ ClampSound::ClampSound(istream& in)
 
 void ClampSound::init()
 {
-	level = fabs(level / 100.0);
-
-	if (level > 1 )
-	{
-		if (level > 1)
-			level = 1;
-		cerr << "WARNING: ClampSound value out of range (0..100)" << endl;
-	}
 	
 }
 
-void ClampSound::next(float& left, float& right, float speed)
+void ClampSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-	float mlevel = -level;
-	float l = 0;
-	float r = 0;
+	sgfloat  mlevel = -level;
+	sgfloat  l = 0;
+	sgfloat  r = 0;
 	generator->next(l, r, speed);
 
 	if (l > level)	l = level;

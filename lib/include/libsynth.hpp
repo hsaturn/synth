@@ -20,6 +20,8 @@
 
 using namespace std;
 
+typedef float sgfloat;
+
 class SoundGenerator
 {
   public:
@@ -32,11 +34,11 @@ class SoundGenerator
 	// Next sample to add to left and right 
 	// added value should be from -1 to 1
 	// speed = samples/sec modifier
-	virtual void next(float &left, float &right, float speed = 1.0) = 0;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) = 0;
 
 	virtual void reset() { };
 
-	bool setValue(string name, float value);
+	bool setValue(string name, sgfloat  value);
 	bool setValue(string name, string value);
 	bool setValue(string name, istream& value);
 
@@ -55,9 +57,9 @@ class SoundGenerator
 	static string getTypes();
 
 	/**
-	 * @return -1..1 float
+	 * @return -1..1 gfloat 
 	 */
-	static float rand();
+	static sgfloat  rand();
 
 	static void help();
 
@@ -77,6 +79,18 @@ class SoundGenerator
 	 * @return 
 	 */
 	static bool eatWord(istream &in, string expected);
+	
+	/**
+	 * Get a gfloat  if available and issue either a warning or an error if out of range / not present
+	 * @param in
+	 * @param min
+	 * @param max
+	 * @param varname
+	 * @return 
+	 */
+	static sgfloat  readFloat(istream &in, sgfloat  min, sgfloat  max, string varname);
+	
+	static sgfloat	readFrequency(istream &);
 
 	// Return the number of active playing generators.
 
@@ -103,8 +117,8 @@ class SoundGenerator
 		static const flag_type REPEAT = 2; // Option can be repeated
 		static const flag_type INPUT = 4;
 		static const flag_type GENERATOR = 8; // Name of the option IS the registered name of a SoundGenerator
-		static const flag_type MS_VOL = 16; // Time in ms (float) / Volume in % couple.
-		static const flag_type FREQ_VOL = 32; // Frequency in HZ (float) / Volume in % couple.
+		static const flag_type MS_VOL = 16; // Time in ms (gfloat ) / Volume in % couple.
+		static const flag_type FREQ_VOL = 32; // Frequency in HZ (gfloat ) / Volume in % couple.
 		static const flag_type CHOICE = 64; // Dropdown List of fixed values (*MUST* appear at beginning of arg_desc with the format [opt1|opt2...]
 		static const flag_type FREQUENCY = 128;
 		static const flag_type FLOAT_ONE = 256;	// Float from -1 to 1
@@ -227,8 +241,8 @@ class SoundGenerator
 	// Main audio callback
 	static void audioCallback(void *unused, Uint8 *byteStream, int byteStreamLength);
 
-	float volume;
-	float freq;
+	sgfloat  volume;
+	sgfloat  freq;
 
 	static void close();
 
@@ -258,6 +272,7 @@ class SoundGenerator
 	static bool saturate;
 	static uint32_t wanted_buffer_size;
 	static uint32_t samples_per_seconds;
+	static SDL_AudioSpec have;
 };
 
 template<class T>
@@ -276,9 +291,9 @@ class SoundGeneratorVarHook : public SoundGenerator
 	:
 	mref(v), mmin(min), mmax(max) { }
 
-	virtual void next(float &left, float &right, float speed = 1.0)
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0)
 	{
-		float delta = 2.0 * (float)(*mref - mmin) / (float)(mmax - mmin) - 1.0;
+		sgfloat  delta = 2.0 * (sgfloat )(*mref - mmin) / (sgfloat )(mmax - mmin) - 1.0;
 
 		left += delta;
 		right += delta;
@@ -310,7 +325,7 @@ class WhiteNoiseGenerator : public SoundGenerator
 
 	WhiteNoiseGenerator(istream& in) { };
 
-	virtual void next(float &left, float &right, float speed = 1.0)
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0)
 	{
 		left += SoundGenerator::rand();
 		right += SoundGenerator::rand();
@@ -342,7 +357,7 @@ class TriangleGenerator : public SoundGenerator
 
 	TriangleGenerator(istream& in);
 
-	virtual void next(float &left, float &right, float speed = 1.0);
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0);
 	virtual void reset();
 
   protected:
@@ -356,11 +371,11 @@ class TriangleGenerator : public SoundGenerator
 	virtual void help(Help& help) const;
 
   private:
-	float a;
-	float da;
-	float asc_da;		// negative steps
-	float desc_da;		// negative steps
-	float ton;
+	sgfloat  a;
+	sgfloat  da;
+	sgfloat  asc_da;		// negative steps
+	sgfloat  desc_da;		// negative steps
+	sgfloat  ton;
 	uint8_t dir;
 };
 
@@ -372,7 +387,7 @@ class SquareGenerator : public SoundGenerator
 
 	SquareGenerator(istream& in);
 
-	virtual void next(float &left, float &right, float speed = 1.0);
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0);
 
 
   protected:
@@ -386,9 +401,9 @@ class SquareGenerator : public SoundGenerator
 	virtual void help(Help& help) const;
 
   private:
-	float a;
-	float da;
-	float invert;
+	sgfloat  a;
+	sgfloat  da;
+	sgfloat  invert;
 	int val;
 };
 
@@ -400,7 +415,7 @@ class SinusGenerator : public SoundGenerator
 
 	SinusGenerator(istream& in);
 
-	virtual void next(float &left, float &right, float speed = 1.0);
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0);
 
   protected:
 	virtual bool _setValue(string name, istream& in);
@@ -414,8 +429,8 @@ class SinusGenerator : public SoundGenerator
 
 
   private:
-	float a;
-	float da;
+	sgfloat  a;
+	sgfloat  da;
 };
 
 class DistortionGenerator : public SoundGenerator
@@ -426,7 +441,7 @@ class DistortionGenerator : public SoundGenerator
 
 	DistortionGenerator(istream& in);
 
-	virtual void next(float &left, float &right, float speed) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed) override;
 
 	virtual bool isValid() const override
 	{
@@ -443,7 +458,7 @@ class DistortionGenerator : public SoundGenerator
 	virtual void help(Help& help) const override;
 
   private:
-	float level;
+	sgfloat  level;
 	SoundGenerator* generator;
 };
 
@@ -455,7 +470,7 @@ class LevelSound : public SoundGenerator
 
 	LevelSound(istream &in);
 
-	virtual void next(float &left, float &right, float speed = 0.1) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 0.1) override;
 
 	virtual void help(ostream &out) const
 	{
@@ -470,7 +485,7 @@ class LevelSound : public SoundGenerator
 	}
 
   private:
-	float level;
+	sgfloat  level;
 };
 
 class FmGenerator : public SoundGenerator
@@ -481,7 +496,7 @@ class FmGenerator : public SoundGenerator
 
 	FmGenerator(istream& in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -500,12 +515,12 @@ class FmGenerator : public SoundGenerator
 	virtual void help(Help& help) const override;
 
   private:
-	float min;
-	float max;
+	sgfloat  min;
+	sgfloat  max;
 	SoundGenerator* sound;
 	SoundGenerator* modulator;
-	float last_ech_left;
-	float last_ech_right;
+	sgfloat  last_ech_left;
+	sgfloat  last_ech_right;
 	bool mod_gen;
 	bool mod_mod;
 };
@@ -518,7 +533,7 @@ class MixerGenerator : public SoundGenerator
 
 	MixerGenerator(istream& in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 
   protected:
@@ -546,7 +561,7 @@ class LeftSound : public SoundGenerator
 		generator = factory(in, true);
 	}
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -574,7 +589,7 @@ class RightSound : public SoundGenerator
 	RightSound() : SoundGenerator("right") { }
 	RightSound(istream &in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -601,7 +616,7 @@ class ClampSound : public SoundGenerator
 	ClampSound() : SoundGenerator("clamp") { }
 	ClampSound(istream &in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -619,7 +634,7 @@ class ClampSound : public SoundGenerator
 	virtual void help(Help& help) const override;
 	
   private:
-	float level;	// -1 .. 1
+	sgfloat  level;	// -1 .. 1
 	SoundGenerator* generator;
 };
 
@@ -631,7 +646,7 @@ class EnvelopeSound : public SoundGenerator
 
 	EnvelopeSound(istream &in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -651,10 +666,10 @@ class EnvelopeSound : public SoundGenerator
 
   private:
 	bool loop;
-	float index;
-	float dindex;
+	sgfloat  index;
+	sgfloat  dindex;
 
-	vector<float> data;
+	vector<sgfloat > data;
 	SoundGenerator* generator;
 };
 
@@ -666,7 +681,7 @@ class MonoGenerator : public SoundGenerator
 
 	MonoGenerator(istream &in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -694,7 +709,7 @@ class AmGenerator : public SoundGenerator
 
 	AmGenerator(istream &in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 	virtual void help(Help& help) const override;
 
 	virtual bool isValid() const override
@@ -711,8 +726,8 @@ class AmGenerator : public SoundGenerator
 
 
   private:
-	float min;
-	float max;
+	sgfloat  min;
+	sgfloat  max;
 	SoundGenerator* generator;
 	SoundGenerator* modulator;
 };
@@ -725,7 +740,7 @@ class ReverbGenerator : public SoundGenerator
 
 	ReverbGenerator(istream& in);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual void help(Help& help) const override;
 
@@ -743,10 +758,10 @@ class ReverbGenerator : public SoundGenerator
 
   private:
 	bool echo;
-	float vol;
-	float ech_vol;
-	float* buf_left;
-	float* buf_right;
+	sgfloat  vol;
+	sgfloat  ech_vol;
+	sgfloat * buf_left;
+	sgfloat * buf_right;
 	uint32_t buf_size;
 	uint32_t index;
 	SoundGenerator* generator;
@@ -765,7 +780,7 @@ class AvcRegulator : public SoundGenerator
 		gain = 1.0;
 	}
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -782,9 +797,9 @@ class AvcRegulator : public SoundGenerator
 	}
 
 	SoundGenerator* generator;
-	float speed;
-	float gain;
-	float min_gain;
+	sgfloat  speed;
+	sgfloat  gain;
+	sgfloat  min_gain;
 };
 
 class Filter : public SoundGenerator
@@ -792,21 +807,22 @@ class Filter : public SoundGenerator
   public:
 	Filter(const string &name) : SoundGenerator(name){}
 	Filter(istream& in);
+	~Filter() {}
 	
 	virtual bool isValid() const override
 	{
 		return generator != 0;
 	}
-	virtual void next(float &left, float &right, float speed = 1.0);
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override=0;
 	
   protected:
 	Filter();
 	
 	SoundGenerator* generator;
-	float lleft;
-	float lright;
-	float coeff;
-	float mcoeff;	// 1.0 - coeff
+	sgfloat  lleft;
+	sgfloat  lright;
+	sgfloat  coeff;
+	sgfloat  mcoeff;	// 1.0 - coeff
 };
 
 class LowFilter : public Filter
@@ -816,7 +832,7 @@ class LowFilter : public Filter
 	LowFilter() : Filter("low") { }
 	LowFilter(istream& in) : Filter(in) {}
 	
-	void next(float& left, float& right, float speed=1.0);
+	void next(sgfloat & left, sgfloat & right, sgfloat  speed=1.0);
 	
   protected:
 	
@@ -826,8 +842,6 @@ class LowFilter : public Filter
 	}
 
 	virtual void help(Help& help) const;
-
-
 };
 
 class HighFilter : public Filter
@@ -836,26 +850,25 @@ class HighFilter : public Filter
 
 	HighFilter() : Filter("high") { }
 	HighFilter(istream& in);
-	void next(float& left, float& right, float speed=1.0);
+	void next(sgfloat & left, sgfloat & right, sgfloat  speed=1.0) override;
 
   protected:
 	
-	virtual SoundGenerator* build(istream& in) const
+	virtual SoundGenerator* build(istream& in) const override
 	{
 		return new HighFilter(in);
 	}
 
-	virtual void help(Help& help) const;
+	virtual void help(Help& help) const override;
 
 
 };
 class AdsrGenerator : public SoundGenerator
 {
-
 	struct value
 	{
-		float s;
-		float vol;
+		sgfloat  s;
+		sgfloat  vol;
 
 		bool operator <=(const value &v)
 		{
@@ -879,7 +892,7 @@ class AdsrGenerator : public SoundGenerator
 
 	bool read(istream &in, value &val);
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual void help(Help &) const override;
 
@@ -902,8 +915,8 @@ class AdsrGenerator : public SoundGenerator
 
 
   private:
-	float t;
-	float dt;
+	sgfloat  t;
+	sgfloat  dt;
 
 	value previous;
 	value target;
@@ -922,7 +935,7 @@ class ChainSound : public SoundGenerator
 
 		ChainElement(uint32_t ms, SoundGenerator* g) : t(ms / 1000.0), sound(g) { };
 
-		float t;
+		sgfloat  t;
 		SoundGenerator* sound;
 	};
 
@@ -936,7 +949,7 @@ class ChainSound : public SoundGenerator
 
 	virtual void reset() override;
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{
@@ -958,8 +971,8 @@ class ChainSound : public SoundGenerator
 
 	AdsrGenerator* adsr;
 	uint16_t gaps;
-	float dt;
-	float t;
+	sgfloat  dt;
+	sgfloat  t;
 };
 
 class Oscilloscope : public SoundGenerator
@@ -970,7 +983,7 @@ class Oscilloscope : public SoundGenerator
 
 		struct Max
 		{
-			float max;
+			sgfloat  max;
 			uint32_t pos;
 		};
 
@@ -979,7 +992,7 @@ class Oscilloscope : public SoundGenerator
 
 		void resize(uint32_t sz) { }
 
-		bool fill(float left, float right);
+		bool fill(sgfloat  left, sgfloat  right);
 
 		void reset();
 
@@ -988,12 +1001,12 @@ class Oscilloscope : public SoundGenerator
 			delete[] buffer;
 		}
 
-		void render(SDL_Renderer* r, int w, int h, bool draw_left, float dx = 1);
+		void render(SDL_Renderer* r, int w, int h, bool draw_left, sgfloat  dx = 1);
 
 	  private:
 		uint32_t size;
 		uint32_t pos;
-		float* buffer;
+		sgfloat * buffer;
 		Max lmax;
 		Max rmax;
 		bool auto_threshold;
@@ -1006,7 +1019,7 @@ class Oscilloscope : public SoundGenerator
 	Oscilloscope(istream& in);
 
 
-	virtual void next(float &left, float &right, float speed = 1.0) override;
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 	virtual bool isValid() const override
 	{

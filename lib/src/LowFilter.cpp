@@ -7,9 +7,9 @@ void LowFilter::help(Help& help) const
     help.add(entry);
 }
 
-void LowFilter::next(float& left, float& right, float speed)
+void LowFilter::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-	float l=0,r=0;
+	sgfloat  l=0,r=0;
 	
 	generator->next(l, r, speed);
 	l = lleft * coeff + mcoeff * l;

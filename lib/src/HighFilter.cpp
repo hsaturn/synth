@@ -14,19 +14,15 @@ void HighFilter::help(Help& help) const
     help.add(entry);
 }
 
-void HighFilter::next(float& left, float& right, float speed)
+void HighFilter::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-	float l=0,r=0;
-	
-	
+	sgfloat  l=0,r=0;
 	
 	generator->next(l, r, speed);
-	l = lleft * coeff + mcoeff * l;
-	r = lright* coeff + mcoeff * r;
-	lleft = l;
-	lright = r;
+	lleft = lleft * mcoeff + l*coeff;
+	lright= lright* mcoeff + r*coeff;
 	
-	left += l;
-	right += r;
+	left += l - lleft;
+	right += r - lright;
 	return;
 }

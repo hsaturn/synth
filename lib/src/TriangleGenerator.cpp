@@ -8,13 +8,7 @@ TriangleGenerator::TriangleGenerator(istream& in)
 	setValue("type", in);
 	
 	if (eatWord(in, "ton"))
-	{
-		in >> ton;
-		ton /= 100.0;
-		if (ton>=1 || ton<=0) cerr << "WARNING: Bad TON value (0.100 allowed)" << endl;
-		if (ton<0) ton=0;
-		if (ton>1) ton=1;
-	}
+		setValue("ton", in);
 	
 	setValue("f", freq);
 	
@@ -45,42 +39,37 @@ bool TriangleGenerator::_setValue(string name, istream& in)
 		}
 		return true;
 	}
+	else if (name=="ton")
+		ton = readFloat(in, 0, 100, "ton") / 100.0;
 	else if (name=="f")
 	{
-		float f;
-		in >> f;
-		if (f <= 0)
-			cerr << "Triangle : Invalid frequency" << endl;
+		sgfloat  f = readFrequency(in);
+		freq = f;
+
+		sgfloat  nech =(sgfloat ) SoundGenerator::samplesPerSeconds() / freq;
+
+		if (dir == BIDIR)
+		{
+			asc_da = 2.0 / ((sgfloat )nech*ton);
+			desc_da =  2.0 / ((sgfloat )nech*(ton - 1));
+		}
 		else
 		{
-			freq = f;
-			
-			float nech =(float) SoundGenerator::samplesPerSeconds() / freq;
-			
-			if (dir == BIDIR)
-			{
-				asc_da = 2.0 / ((float)nech*ton);
-				desc_da =  2.0 / ((float)nech*(ton - 1));
-			}
-			else
-			{
-				asc_da = 1 / (float)nech;
-				desc_da = - asc_da;
-			}
-			if (dir == DESC)
-				da = desc_da;
-			else if (dir == ASC)
+			asc_da = 1 / (sgfloat )nech;
+			desc_da = - asc_da;
+		}
+		if (dir == DESC)
+			da = desc_da;
+		else if (dir == ASC)
+			da = asc_da;
+		else
+		{
+			if (da>0)
 				da = asc_da;
 			else
-			{
-				if (da>0)
-					da = asc_da;
-				else
-					da = desc_da;
-			}
-			cout << "ASC = " << asc_da << " DESC = " << desc_da << " TON=" << ton << endl;
-			return true;
+				da = desc_da;
 		}
+		return true;
 	}
 	return false;
 }
@@ -101,7 +90,7 @@ void TriangleGenerator::reset()
 		a = 0;
 }
 
-void TriangleGenerator::next(float& left, float& right, float speed)
+void TriangleGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
 	a += da;
 
