@@ -1,21 +1,59 @@
 # synth
-SDL Sound complex generator in command line. Like a synthetiser.
+
+Dynamic sound generator.
 
 Also, a good code sample for SDL AudioDevice real time manipulation.
 You, developper may want to use only the end of the synth.cpp file (from void audioCallback(...) to the end).
-
 This one file c++ file is able to generate very complicated sound such as a synthetiser.
 
 # features
-Auto mixing all sound generation of this kind :
+
+* Very simple to add to existing project :
+
+##  Minimal examples :
+  1/ Test under bash > synth 1000 sinus 1000
+  2/ Add to C++ : SoundGenerator::play(SoundGenerator::factory("sinus 1000")); usleep(1000000);
+     That's all !
+
+  3/ Simple Hooks : C++ hook allowing to modify dynamically a sound :
+
+  class SpeedHook : public SoundGeneratorVarHook<float>
+  {
+     SpeedHook() :: SoundGeneratorVarHook(&speed, 0, 200, "hook_speed")
+     atomic<float> speed;  // from 0 to 200
+  }
+
+  SpeedHook* engine_speed = new SpeedHook();
+  SoundGenerator::play(SoundGenerator::factory("fm 50 150 sinus 440 hook_speed"));
+  
+  while(true) {
+      ... 
+      engine_speed.speed = 30;   <- sound will adapt accordingly
+      ...
+  }
+
+  It is also possible to store sound definition in files.
+
+  in C++ : SoundGenerator::factory("mysound.synth");
+  cmdline: synth mysound.synth
+
+## Sound definition that can be reused for any kind of use (modulator, sound, envelop etc)
+
+> synth define engine { sinus 440 square 215:15 } engine
 
 ## Audio features
+
+* No hard limit to number of voices mixed together
+
+Any combinaison of arbitrary number of these :
+
 * sinus
 * square
-* triangle
+* triangle / sawtooth
 * distorsion
 * white noise
 * reverberation / echo
+* low / high / band filter (in progress)
 
 * frequency modulation (any signal)
 * amplitude modulation (any signal)
@@ -29,6 +67,10 @@ Auto mixing all sound generation of this kind :
 
 * chain of sounds (sequence)
 * external hooks sound generator (mouse sound demo)
+
+* factory from string / stream
+* sounds can be stored in more friendly files
+* custom frequencies definition (see frequencies.def)
 
 ## Misc features
 
@@ -62,7 +104,8 @@ And thus it is possible to play a little song :
 cd  bin/synth
 ./synth ../../tests/song.synth
 
-In that case, (yet) synth mush be launched from bin/synth because the frequencies file is read from the current directory.
+In that case, the frequencies.def file must exist in the current folder (yet)
+So, synth binary file mush be launched from bin/synth because the frequencies file is read from the current directory.
 
 Example of a engine noise that accelerates
 
@@ -74,8 +117,8 @@ Example of a engine noise that accelerates
  define engine
  {
 	fm
-		0 150
-		am
+		0 150 
+		am 
 			0 100
 			triangle 100:50
 			square 39
@@ -87,10 +130,18 @@ Example of a engine noise that accelerates
  reverb 10:50 engine
 ```
 
-  The base sound is a triangle@100Hz (50% volume so the reverb does not saturate.
+This kind of file is easier to read.
+engine is a sound defined by a fm modulator.
+
+The base sound is am 0 100 triangle 100:50 square 39.
+One can here that sound by using the synth utility.
+
+> synth am 0 100 triangle 100:50 square 39
+
+  The base sound is a triangle@100Hz (50% volume so the reverb will not saturate).
   The base sound is chopped @39Hz by the am modulator.
 
-  Then, the result is frequency modulated by the fm modulator.
+  Then, the result is modulated (frequency) by the fm modulator.
 
   The fm modulator takes 4 arguments, in the engine example :
    

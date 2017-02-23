@@ -46,6 +46,8 @@ static AvcRegulator gen_avc;
 static ChainSound gen_chain;
 static Oscilloscope gen_osc;
 static LowFilter gen_lowf;
+static TriangleGenerator gen_tri;
+static ClampSound gen_clamp;
 
 SquareGenerator::SquareGenerator(istream& in)
 {
@@ -413,8 +415,7 @@ void EnvelopeSound::next(float& left, float& right, float speed)
     right += r*f;
 }
 
-void EnvelopeSound::help(Help& help) const
-{
+void EnvelopeSound::help(Help& help) const {
     // @TODO
     /*HelpEntry* entry = new HelpEntry("envelope", "Linear enveloppe generator (time arguments)");
     entry->addOption(new HelpOption("ms:level","Time and level in millisecond and %"));
@@ -422,8 +423,7 @@ void EnvelopeSound::help(Help& help) const
     out << "envelope {timems} [once|loop] {data} generator" << endl;
     out << "  data is either : file filename, or data v1 ... v2 end" << endl;
     out << "  values are from -200 to 200 (float, >100 may distort sound)" << endl;
-     * */
-}
+     * */ }
 
 MonoGenerator::MonoGenerator(istream& in)
 {

@@ -7,7 +7,6 @@ install(FILES synth DESTINATION bin PERMISSIONS WORLD_EXECUTE)
 
 add_custom_target (
 	test_synth
-	DEPENDS synt
-	COMMAND mkdir -p CartPoleCfg_d
+	DEPENDS synth
 	COMMAND ./synth 1000 sinus 440
 	)

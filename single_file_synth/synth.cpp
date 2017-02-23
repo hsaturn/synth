@@ -17,7 +17,7 @@ using namespace std;
 
 uint32_t ech = 48000;
 
-const int BUF_LENGTH = 8192;
+const int BUF_LENGTH = 1024;
 
 class SoundGenerator
 {

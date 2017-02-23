@@ -8,6 +8,13 @@ extern uint32_t samples_per_seconds;
 // Frequencies list
 static map<string, float> sf;
 
+SoundGenerator* SoundGenerator::factory(string s)
+{
+    stringstream stream;
+    stream << s;
+    return factory(stream);
+}
+
 SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 {
 	SoundGenerator* gen=0;

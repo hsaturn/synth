@@ -1,5 +1,5 @@
 #include <libsynth.hpp>
-
+#include "unistd.h"
 
 void help()
 {

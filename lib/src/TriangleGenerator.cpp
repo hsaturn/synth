@@ -6,9 +6,14 @@ TriangleGenerator::TriangleGenerator(istream& in)
 	sign = 1;
 	
 	setValue("type", in);
+	
 	da = 4 / ((float) SoundGenerator::samplesPerSeconds()  / freq);
 	if (dir != BIDIR)
 		da /= 2.0;
+	
+	mda = -da;
+	pda = da;
+	
 	reset();
 }
 
@@ -76,17 +81,27 @@ void TriangleGenerator::reset()
 
 void TriangleGenerator::next(float& left, float& right, float speed)
 {
-	a += da * speed * (float)sign;
+	a += da;
     
     if (a>1.0)
     {
-        a = 2.0-a;
-		sign = -1;
+		if (dir == ASC)
+			a = a - 2.0;
+		else
+		{
+			a = 2.0-a;
+			da=mda;
+		}
     }
     else if (a<-1.0)
     {
-        a = -2 -a;
-		sign = -sign;
+		if (dir == DESC)
+			a = a + 2.0;
+		else
+		{
+			a = -2 -a;
+			da=pda;
+		}
     }
 	left += a * volume;
 	right += a * volume;
