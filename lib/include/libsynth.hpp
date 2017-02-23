@@ -69,6 +69,14 @@ class SoundGenerator
 	static bool stop(SoundGenerator*);
 	static bool remove(SoundGenerator*); // Remove it
 	static bool has(SoundGenerator*, bool bLock = false); // Does it playing ?
+	
+	/**
+	 * Eat expected word if exist else 'in' is left unchanged and false is returned
+	 * @param in
+	 * @param expected
+	 * @return 
+	 */
+	static bool eatWord(istream &in, string expected);
 
 	// Return the number of active playing generators.
 
@@ -352,7 +360,6 @@ class TriangleGenerator : public SoundGenerator
 	float da;
 	float mda;	// positive steps
 	float pda;	// negative steps
-	int sign;
 	uint8_t dir;
 };
 

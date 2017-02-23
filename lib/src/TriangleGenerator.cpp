@@ -2,18 +2,24 @@
 
 TriangleGenerator::TriangleGenerator(istream& in)
 {
+	float ton = 0.5;
 	readFrequencyVolume(in);
-	sign = 1;
 	
 	setValue("type", in);
 	
-	da = 4 / ((float) SoundGenerator::samplesPerSeconds()  / freq);
-	if (dir != BIDIR)
-		da /= 2.0;
+	if (eatWord(in, "ton"))
+	{
+		in >> ton;
+		ton /= 100.0;
+	}
+	cout << "ton=" << ton << endl;
+	da = 8.0 / ((float) SoundGenerator::samplesPerSeconds()  / freq);
 	
-	mda = -da;
-	pda = da;
-	
+	if (dir == BIDIR)
+	{
+		mda = -da * ton;
+		pda = da * (1.0-ton);
+	}
 	reset();
 }
 
@@ -30,15 +36,9 @@ bool TriangleGenerator::_setValue(string name, istream& in)
 		in >> asc_desc;
 		
 		if (asc_desc == "asc")
-		{
 			dir = ASC;
-			sign = 1;
-		}
 		else if (asc_desc == "desc")
-		{
-			sign = -1;
 			dir = DESC;
-		}
 		else
 		{
 			in.clear();
@@ -66,15 +66,9 @@ bool TriangleGenerator::_setValue(string name, istream& in)
 void TriangleGenerator::reset()
 {
 	if (dir == ASC)
-    {
-        sign = 1;
 		a = -1;
-    }
 	else if (dir == DESC)
-    {
-        sign = -1;
 		a = 1;
-    }
 	else
 		a = 0;
 }
