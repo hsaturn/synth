@@ -48,7 +48,8 @@ This one file c++ file is able to generate very complicated sound such as a synt
 Any combinaison of arbitrary number of these :
 
 * sinus
-* square
+* square (no eptr)
+* blep (lot better square, with 
 * triangle / sawtooth
 * distorsion
 * white noise

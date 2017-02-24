@@ -53,6 +53,11 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 	{
 		echo = false;
 	}
+	else if (type == "-v")
+	{
+		verbose++;
+		return factory(in, needed);
+	}
 	else if (type == "-b")
 	{
 		uint32_t buffer_size;
@@ -590,14 +595,14 @@ bool SoundGenerator::eatWord(istream& in, string expected)
 {
 	if (!in.good())
 		return false;
-	
+
 	stringstream::pos_type last = in.tellg();
 	string word;
 	in >> word;
 
 	if (word == expected)
 		return true;
-	
+
 	in.clear();
 	in.seekg(last);
 	return false;
@@ -606,35 +611,56 @@ bool SoundGenerator::eatWord(istream& in, string expected)
 sgfloat  SoundGenerator::readFloat(istream& in, sgfloat  min, sgfloat  max, string varname)
 {
 	char c;
-	if (min>max)
+	if (min > max)
 	{
 		cerr << "DEV ERROR: min > max " << min << "/" << max << " for " << varname << endl;
 		return max;
 	}
 	if (in.good())
 	{
-		c = in.peek();
-		if (c!='.' && c<='0' && c>='9')
+		c = trim(in);
+		if (c != '.' && (c < '0' || c > '9'))
 		{
 			cerr << "ERROR: Expecting float for '" << varname << "' value.";
 			return max;
 		}
 		sgfloat  f;
 		in >> f;
-		if (f>max || f<min) cerr << "WARNING: " << varname << '=' << f << " out of range [" << min << "-" << max << "] !" << endl;
-		if (f<min) f=min;
-		if (f>max) f=max;
+		if (f > max || f < min) cerr << "WARNING: " << varname << '=' << f << " out of range [" << min << "-" << max << "] !" << endl;
+		if (f < min) f = min;
+		if (f > max) f = max;
+
+		if (verbose)
+			cout << varname << '=' << f << endl;
 		return f;
 	}
+	else
+		cerr << "WARNING: Missing " << varname << " parameter [" << min << '-' << max << "]" << endl;
+
 	return max;
 
 }
 
-sgfloat SoundGenerator::readFrequency(istream& in)
+sgfloat SoundGenerator::readFrequency(istream& in, string name)
 {
 	sgfloat f;
 	in >> f;
-	if (f<0 || f>200000.0)
-		cerr << "ERROR: Invalid frequency : " << f << endl;
+	if (f < 0 || f > 200000.0)
+		cerr << "ERROR: Invalid " << name << " frequency : " << f << endl;
+	if (verbose)
+		cout << name << '=' << f << endl;
 	return f;
+}
+
+char SoundGenerator::trim(istream& in)
+{
+	if (!in.good())
+		return 0;
+	char c = in.peek();
+	while ((c == ' ' || c == 10 || c == 13 || c == '\t') && in.good())
+	{
+		in.ignore();
+		c = in.peek();
+	}
+	return c;
 }

@@ -2,6 +2,7 @@
 
 TriangleGenerator::TriangleGenerator(istream& in)
 {
+	dir = BIDIR;
 	ton = 0.5;
 	readFrequencyVolume(in);
 	
@@ -17,7 +18,6 @@ TriangleGenerator::TriangleGenerator(istream& in)
 
 bool TriangleGenerator::_setValue(string name, istream& in)
 {
-	dir = BIDIR;
 	if (!in.good())
 		return false;
 
@@ -37,6 +37,7 @@ bool TriangleGenerator::_setValue(string name, istream& in)
 			in.seekg(last);
 			return false;
 		}
+		setValue("freq", freq);
 		return true;
 	}
 	else if (name=="ton")
@@ -97,7 +98,9 @@ void TriangleGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
     if (a>1.0)
     {
 		if (dir == ASC)
+		{
 			a = a - 2.0;
+		}
 		else
 		{
 			a = 2.0-a;

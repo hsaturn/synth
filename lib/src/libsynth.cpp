@@ -17,6 +17,7 @@ map<string, const SoundGenerator*> SoundGenerator::generators;
 string SoundGenerator::last_type;
 map<string, string> SoundGenerator::defines;
 bool SoundGenerator::echo = true;
+uint8_t SoundGenerator::verbose = 0;
 bool SoundGenerator::init_done = false;
 SDL_AudioDeviceID SoundGenerator::dev;
 list<SoundGenerator*> SoundGenerator::list_generator;
@@ -49,6 +50,8 @@ static LowFilter gen_low;
 static HighFilter gen_high;
 static TriangleGenerator gen_tri;
 static ClampSound gen_clamp;
+static BlepOscillator gen_blep;
+static ResoFilter gen_reso;
 
 SquareGenerator::SquareGenerator(istream& in)
 {
@@ -212,12 +215,12 @@ void FmGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     if (min == max)
     {
-        sound->next(left, right, mod_gen ? speed : 1.0);
+        sound->next(left, right, mod_gen ? speed : 1.0f);
         return;
     }
 
     sgfloat  l = 0, r = 0;
-    modulator->next(l, r, mod_mod ? speed : 1.0); // nbre entre -1 et 1
+    modulator->next(l, r, mod_mod ? speed : 1.0f); // nbre entre -1 et 1
 
     l = (l + r) / 2.0;
     l = min + (max - min)*(l + 1.0) / 2.0;

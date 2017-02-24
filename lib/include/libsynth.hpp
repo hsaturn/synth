@@ -90,7 +90,14 @@ class SoundGenerator
 	 */
 	static sgfloat  readFloat(istream &in, sgfloat  min, sgfloat  max, string varname);
 	
-	static sgfloat	readFrequency(istream &);
+	static sgfloat	readFrequency(istream &, string name="");
+	
+	/**
+	 * remove space tab, cr and lf from in and return first non blank character or 0 if bad 
+	 * @param in
+	 * @return 
+	 */
+	static char trim(istream& in);
 
 	// Return the number of active playing generators.
 
@@ -263,6 +270,7 @@ class SoundGenerator
 	static map<string, const SoundGenerator*> generators;
 	static map<string, string> defines;
 	static bool echo;
+	static uint8_t verbose;
 	static bool init_done;
 	static SDL_AudioDeviceID dev;
 	static list<SoundGenerator*> list_generator;
@@ -340,16 +348,16 @@ class WhiteNoiseGenerator : public SoundGenerator
 
 	virtual void help(Help& help) const
 	{
-		help.add(new HelpEntry("wnoise", "Generator white noise"));
+		help.add(new HelpEntry("wnoise", "Generator stereo white noise"));
 	}
 
 };
 
 class TriangleGenerator : public SoundGenerator
 {
-	const int ASC = 0;
-	const int DESC = 1;
-	const int BIDIR = 2;
+	const uint8_t ASC = 0;
+	const uint8_t DESC = 1;
+	const uint8_t BIDIR = 2;
 
   public:
 
@@ -767,6 +775,35 @@ class ReverbGenerator : public SoundGenerator
 	SoundGenerator* generator;
 };
 
+
+class BlepOscillator : public SoundGenerator
+{
+  public:
+
+	BlepOscillator() : SoundGenerator("blep") { }
+
+	BlepOscillator(istream& in);
+
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
+
+	virtual void help(Help& help) const override;
+
+  protected:
+
+	virtual SoundGenerator* build(istream &in) const override
+	{
+		return new BlepOscillator(in);
+	}
+	
+	void update();
+	
+  private:
+	sgfloat	phase;
+	sgfloat	pw;
+	sgfloat	phase_inc;
+};
+
+
 class AvcRegulator : public SoundGenerator
 {
   public:
@@ -777,7 +814,7 @@ class AvcRegulator : public SoundGenerator
 
 	virtual void reset()
 	{
-		gain = 1.0;
+		gain = 1.0f;
 	}
 
 	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
@@ -860,9 +897,83 @@ class HighFilter : public Filter
 	}
 
 	virtual void help(Help& help) const override;
-
-
 };
+
+class ResoFilter : public SoundGenerator
+{
+  public:
+
+	ResoFilter() : SoundGenerator("reso") { }
+	ResoFilter(istream& in);
+	virtual ~ResoFilter() {}
+	
+	virtual bool isValid() const override
+	{
+		return generator != 0;
+	}
+	void next(sgfloat & left, sgfloat & right, sgfloat  speed=1.0) override;
+
+  protected:
+	
+	virtual SoundGenerator* build(istream& in) const override
+	{
+		return new ResoFilter(in);
+	}
+
+	virtual void help(Help& help) const override;
+
+  protected:
+	SoundGenerator* generator;
+
+	sgfloat  lleft;
+	sgfloat  lright;
+	sgfloat	f;
+	sgfloat q;
+	sgfloat fb;
+	sgfloat lbuf0;
+	sgfloat lbuf1;
+	sgfloat rbuf0;
+	sgfloat rbuf1;
+};
+
+
+class IIRFilter : public SoundGenerator
+{
+  public:
+
+	IIRFilter();
+	IIRFilter(istream& in);
+	virtual ~IIRFilter() {}
+	
+	virtual bool isValid() const override
+	{
+		return generator != 0;
+	}
+	void next(sgfloat & left, sgfloat & right, sgfloat  speed=1.0) override;
+
+  protected:
+	
+	virtual SoundGenerator* build(istream& in) const override
+	{
+		return new IIRFilter(in);
+	}
+
+	virtual void help(Help& help) const override;
+
+  protected:
+	SoundGenerator* generator;
+
+	sgfloat w,q,rf,c;	// Filter delay (left))
+	sgfloat lfb_lp, lfb_hp;		// Storage for calculated feedback (left)
+	
+	sgfloat vibrapos_l,vibraspeed_l,vibrapos_r,vibraspeed_r;	// Filter delay (left))
+	sgfloat rfb_lp, rfb_hp;		// Storage for calculated feedback (left)
+	
+	sgfloat p4=1.0e-24;		// Pentium 4 denormal problem elimination
+	sgfloat freq, magnitude, resofreq, amp;
+};
+
+
 class AdsrGenerator : public SoundGenerator
 {
 	struct value
@@ -983,7 +1094,7 @@ class Oscilloscope : public SoundGenerator
 
 		struct Max
 		{
-			sgfloat  max;
+			sgfloat  value;
 			uint32_t pos;
 		};
 

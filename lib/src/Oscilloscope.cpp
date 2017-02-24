@@ -11,8 +11,8 @@ Oscilloscope::Oscilloscope::Buffer::Buffer(uint32_t sz, bool auto_thr)
 void Oscilloscope::Oscilloscope::Buffer::reset()
 {
 	pos = 0;
-	lmax.max = -9e9;
-	rmax.max = -9e9;
+	lmax.value = -9e9;
+	rmax.value = -9e9;
 }
 
 void Oscilloscope::Oscilloscope::Buffer::render(SDL_Renderer* r, int w, int h, bool draw_left, sgfloat  dx)
@@ -64,16 +64,24 @@ bool Oscilloscope::Buffer::fill(sgfloat  left, sgfloat  right)
 	{
 		if (auto_threshold && pos>2)
 		{
-			if (lmax.max<left && buffer[pos-2] < left)
+#if 0 // Synchro 1
+			if (lmax.value < buffer[pos-2]-left)
 			{
-				lmax.max=left+0.02;
+				lmax.value = buffer[pos-2]-left;
+				lmax.pos = pos;
+			}
+#else // Synchro 2
+			if (lmax.value<left && buffer[pos-2] < left)
+			{
+				lmax.value=left+0.02;
 				lmax.pos=pos;
 			}
-			if (rmax.max<right && buffer[pos-1] < right)
+			if (rmax.value<right && buffer[pos-1] < right)
 			{
-				rmax.max=right+0.02;
+				rmax.value=right+0.02;
 				rmax.pos=pos+1;
 			}
+#endif
 		}
 		buffer[pos++]=left;
 		buffer[pos++]=right;
