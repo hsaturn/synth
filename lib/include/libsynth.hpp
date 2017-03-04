@@ -496,13 +496,13 @@ class LevelSound : public SoundGenerator
 	sgfloat  level;
 };
 
-class FmGenerator : public SoundGenerator
+class FmModulator : public SoundGenerator
 {
   public:
 
-	FmGenerator() : SoundGenerator("fm") { } // for thefactory
+	FmModulator() : SoundGenerator("fm") { } // for thefactory
 
-	FmGenerator(istream& in);
+	FmModulator(istream& in);
 
 	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
@@ -517,7 +517,7 @@ class FmGenerator : public SoundGenerator
 
 	virtual SoundGenerator* build(istream& in) const override
 	{
-		return new FmGenerator(in);
+		return new FmModulator(in);
 	}
 
 	virtual void help(Help& help) const override;

@@ -28,7 +28,6 @@ void ResoFilter::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 	
 	//set feedback amount given f and q between 0 and 1
 
-	//for each sample...
 	lbuf0 = lbuf0 + f * (l - lbuf0 + fb * (lbuf0 - lbuf1));
 	lbuf1 = lbuf1 + f * (lbuf0 - lbuf1);
 	left += lbuf1;

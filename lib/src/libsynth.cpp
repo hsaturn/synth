@@ -33,7 +33,7 @@ static SquareGenerator gen_sq;
 static SinusGenerator gen_si;
 static AmGenerator gen_am;
 static DistortionGenerator gen_dist;
-static FmGenerator gen_fm;
+static FmModulator gen_fm;
 static MixerGenerator gen_mix;
 static WhiteNoiseGenerator gen_wn;
 static EnvelopeSound gen_env;
@@ -159,7 +159,7 @@ void DistortionGenerator::help(Help& help) const
 
 LevelSound::LevelSound(istream& in)
 {
-	level = readFloat(in, 0, 100, "level") / 100.0f;
+	level = (readFloat(in, 0, 100, "level")-50) / 50.0f;
 }
 
 void LevelSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
@@ -168,7 +168,7 @@ void LevelSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
     right += level;
 }
 
-FmGenerator::FmGenerator(istream& in)
+FmModulator::FmModulator(istream& in)
 {
     in >> min;
     in >> max;
@@ -211,7 +211,7 @@ FmGenerator::FmGenerator(istream& in)
     min /= 100.0;
 }
 
-void FmGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
+void FmModulator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
     if (min == max)
     {
@@ -229,7 +229,7 @@ void FmGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
     sound->next(left, right, l);
 }
 
-void FmGenerator::help(Help& help) const
+void FmModulator::help(Help& help) const
 {
     HelpEntry* entry = new HelpEntry("fm", "Frequency modulation");
     entry->addOption(new HelpOption("min", "0..200% modulation when modulator=-1"));

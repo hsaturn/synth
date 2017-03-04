@@ -37,18 +37,19 @@ void BlepOscillator::update()
 void BlepOscillator::next(sgfloat& left, sgfloat& right, sgfloat speed)
 {
 	sgfloat sample;
+	sgfloat pinc = phase_inc * speed;
 	
 	if (phase < pw)
 		sample = 1.0f;
 	else
 		sample = -1.0f;
 	
-	sample += poly_blep(phase, phase_inc);
+	sample += poly_blep(phase, pinc);
 	
 	sgfloat phase2 = phase + 1.0f - pw;
 	phase2 = phase2 - floor(phase2);
-	sample -= poly_blep(phase2, phase_inc);
-	phase += phase_inc;
+	sample -= poly_blep(phase2, pinc);
+	phase += pinc;
 	phase -= floor(phase);
 	
 	left += sample;
