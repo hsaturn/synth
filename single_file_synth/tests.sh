@@ -67,3 +67,4 @@ echo "Another one"
 ./synth 30000 reverb 30:30 fm 0 100 am 0 100 square 39:30 triangle 100 adsr 1:0 1000:0 2000:100 3001:400 6000:400 8000:0 9000:0 loop level 1 reverb 30:50 { right am 0 100 sinus 440:35 sinus 1 left am 100 0 sinus 440:34 sinus 0.5 }
 echo "How to modify sound in real time with the mouse for example"
 ./mousynth 20000 -b 16 reverb 300:60 fm 0 200 sq 220:20 mouse_hook 0 5
+./synth avc fm 30 120 reverb 50:20 am 30 100 fm 50 150 sin 440 sin 1 sin 3 sin 0.37./synth avc fm 30 120 reverb 50:20 am 30 100 fm 50 150 sin 440 sin 1 sin 3 sin 0.37./synth avc fm 30 120 reverb 50:20 am 30 100 fm 50 150 sin 440 sin 1 sin 3 sin 0.37
