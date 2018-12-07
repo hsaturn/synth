@@ -186,11 +186,11 @@ And here is the C++ code to define engine_speed
 
 
 ```c++
-float engine_speed;	// Float value that represents the engine speed
+atomic<float> engine_speed;	// Float value that represents the engine speed
 class EngineSpeedHook : public SoundGeneratorVarHook<float>
 {
 	public:
-		EngineSpeedHook(float &v) : SoundGeneratorFloatHook(v, 0.0, 100.0, "engine_speed"){}
+		EngineSpeedHook(float &v) : SoundGeneratorVarHook(&engine_speed, 0.0, 100.0, "engine_speed"){}
 };
 
 static EngineSpeedHook instance;	// Needed to register the 'engine_speed' hook so it can be used.
