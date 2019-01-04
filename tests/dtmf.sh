@@ -59,6 +59,6 @@ while [ "$1" != "" ]; do
 		f1=1633
 		f2=941
 	fi
-	./synth 200 sinus $f1 sinus $f2
+	./synth 200 sinus $f1:50 sinus $f2:50
 	shift
 done
