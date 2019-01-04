@@ -1,0 +1,16 @@
+CMakeCache.txt
+CMakeFiles/
+Makefile
+bin/CMakeFiles/
+bin/Makefile
+bin/cmake_install.cmake
+bin/synth/CMakeFiles/
+bin/synth/Makefile
+bin/synth/cmake_install.cmake
+bin/synth/synth
+cmake_install.cmake
+install_manifest.txt
+lib/CMakeFiles/
+lib/Makefile
+lib/cmake_install.cmake
+lib/libsynthetizer.so
