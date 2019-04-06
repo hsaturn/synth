@@ -17,7 +17,8 @@ This one file c++ file is able to generate very complicated sound such as a synt
 
   3/ Simple Hooks : C++ hook allowing to modify dynamically a sound :
 
-  ```class SpeedHook : public SoundGeneratorVarHook<float>
+  ```c++
+  class SpeedHook : public SoundGeneratorVarHook<float>
   {
      SpeedHook() :: SoundGeneratorVarHook(&speed, 0, 200, "hook_speed")
      atomic<float> speed;  // from 0 to 200
@@ -30,7 +31,8 @@ This one file c++ file is able to generate very complicated sound such as a synt
       ... 
       engine_speed.speed = 30;   <- sound will adapt accordingly
       ...
-  }```
+  }
+  ```
 
   It is also possible to store sound definition in files.
 
@@ -103,15 +105,19 @@ write some small musics synth files.
 ```
 And thus it is possible to play a little song :
 
+```
 cd  bin/synth
 ./synth ../../tests/song.synth
+```
 
 In that case, the frequencies.def file must exist in the current folder (yet)
 So, synth binary file mush be launched from bin/synth because the frequencies file is read from the current directory.
 
 Example of a engine noise that accelerates
 
+```
  > ./synth 30000 reverb 10:50 fm 0 150 am 0 100 triangle 100:50 square 39 adsr 1:0 1000:0 2000:100 5001:400 6000:400 8000:-100 9000:0 loop level 1
+ ```
 
  The corresponding description file could be
 
@@ -138,7 +144,9 @@ engine is a sound defined by a fm modulator.
 The base sound is am 0 100 triangle 100:50 square 39.
 One can here that sound by using the synth utility.
 
+```
 > synth am 0 100 triangle 100:50 square 39
+```
 
   The base sound is a triangle@100Hz (50% volume so the reverb will not saturate).
   The base sound is chopped @39Hz by the am modulator.
