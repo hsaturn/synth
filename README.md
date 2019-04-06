@@ -36,7 +36,10 @@ This one file c++ file is able to generate very complicated sound such as a synt
 
   It is also possible to store sound definition in files.
 
-  in C++ : SoundGenerator::factory("mysound.synth");
+  in C++ :
+  ```c++
+  SoundGenerator::factory("mysound.synth");
+  ```
   cmdline: synth mysound.synth
 
 ## Sound definition that can be reused for any kind of use (modulator, sound, envelop etc)
