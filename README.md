@@ -17,7 +17,7 @@ This one file c++ file is able to generate very complicated sound such as a synt
 
   3/ Simple Hooks : C++ hook allowing to modify dynamically a sound :
 
-  class SpeedHook : public SoundGeneratorVarHook<float>
+  ```class SpeedHook : public SoundGeneratorVarHook<float>
   {
      SpeedHook() :: SoundGeneratorVarHook(&speed, 0, 200, "hook_speed")
      atomic<float> speed;  // from 0 to 200
@@ -30,7 +30,7 @@ This one file c++ file is able to generate very complicated sound such as a synt
       ... 
       engine_speed.speed = 30;   <- sound will adapt accordingly
       ...
-  }
+  }```
 
   It is also possible to store sound definition in files.
 
