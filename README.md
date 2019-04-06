@@ -108,7 +108,7 @@ write some small musics synth files.
 ```
 And thus it is possible to play a little song :
 
-```
+```bash
 cd  bin/synth
 ./synth ../../tests/song.synth
 ```
@@ -118,7 +118,7 @@ So, synth binary file mush be launched from bin/synth because the frequencies fi
 
 Example of a engine noise that accelerates
 
-```
+```bash
  > ./synth 30000 reverb 10:50 fm 0 150 am 0 100 triangle 100:50 square 39 adsr 1:0 1000:0 2000:100 5001:400 6000:400 8000:-100 9000:0 loop level 1
  ```
 
@@ -147,7 +147,7 @@ engine is a sound defined by a fm modulator.
 The base sound is am 0 100 triangle 100:50 square 39.
 One can here that sound by using the synth utility.
 
-```
+```bash
 > synth am 0 100 triangle 100:50 square 39
 ```
 
