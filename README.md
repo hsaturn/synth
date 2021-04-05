@@ -214,7 +214,9 @@ One should create more sophisticated hooks. See mouse.cpp for the class that def
 It 
 
 
-# examples
+# Examples
+
+ > synth help   (must I explain ?)
 
 440Hz sinus for 1000ms (1s)
  > synth 1000 sin 440
@@ -232,14 +234,16 @@ Changing am from square to sinus
 
 Mixing two signals, triangle @440Hz 50% volume and sinus 330Hz for 1sec
 
- > synth 1000 tri 440:50 sinus 330
+ > synth 1000 tri 443.55:50 sinus 332.29
 
 ... Hum how to define that ???
 
  > synth 1000000 am 0 100 fm 80 120 sq 440:25 tri 1 square 5 am 0 100 fm 80 120 sq 330:25 tri 1 square 6 fm 80 120 sinus 1200:30 sinus 3
  
- How to group together generators (to be used by a modulator for example)
- 
- > synth { sinus 220 sinus 330 }
- > synth fm 80 120 { sinus 1500 sinus 1300 } sinus 5
+ Group sounds togethers
+ > synth { sinus 220 sinus 330 sinus 110 }
+
+ Use group in modulator (This can produce very complex sounds)
+
+ > synth fm 80 120 { sinus 887.10 sinus 1117.67 } sinus 5
  
