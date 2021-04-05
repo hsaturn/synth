@@ -1,6 +1,8 @@
 # synth
 
-Dynamic sound generator.
+![Oscillograph](doc/osc.png)
+
+Real time dynamic sound generator.
 
 Also, a good code sample for SDL AudioDevice real time manipulation.
 You, developper may want to use only the end of the synth.cpp file (from void audioCallback(...) to the end).
