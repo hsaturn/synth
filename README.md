@@ -120,11 +120,12 @@ And thus it is possible to play a little song :
 
 ```bash
 cd tests  <--- important because the frequencies.def file must be in current directory
-synth ../../tests/song.synth
+synth 2000 chain ms 250 gen sinus DO x2 RE MI x2 FA SOL LA SI DO2 RE2 end
 ```
 
-In that case, the frequencies.def file must exist in the current folder (yet)
-So, synth binary file mush be launched from bin/synth because the frequencies file is read from the current directory.
+x2 are equivalent to 250x2
+
+TODO: remove ticks between notes (but this is hard)
 
 Example of a engine noise that accelerates
 
