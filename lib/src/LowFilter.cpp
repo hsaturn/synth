@@ -2,7 +2,7 @@
 
 void LowFilter::help(Help& help) const
 {
-    HelpEntry* entry = new HelpEntry("low", "Low frequency filter");
+    HelpEntry* entry = new HelpEntry("low", "Low pass filter");
     entry->addOption(new HelpOption("freq", "Frequency cutoff", HelpOption::FREQUENCY));
     help.add(entry);
 }

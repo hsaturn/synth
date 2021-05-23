@@ -9,7 +9,7 @@ HighFilter::HighFilter(istream& in)
 
 void HighFilter::help(Help& help) const
 {
-    HelpEntry* entry = new HelpEntry("high", "Low frequency filter");
+    HelpEntry* entry = new HelpEntry("high", "High pass filter");
     entry->addOption(new HelpOption("freq", "Frequency cutoff", HelpOption::FREQUENCY));
     help.add(entry);
 }
