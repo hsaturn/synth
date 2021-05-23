@@ -569,7 +569,7 @@ bool SoundGenerator::setValue(string name, istream &in)
 			in >> note;
 
 			if (sf.find(note) != sf.end())
-				note = sf[note];
+				note = std::to_string(sf[note]);
 
 			freq = atof(note.c_str());
 

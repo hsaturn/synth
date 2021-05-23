@@ -94,6 +94,7 @@ Any combinaison of arbitrary number of these :
 
 * frequencies.def file can be filled with notes frequencies making it easy to
 write some small musics synth files.
+(TODO: yet it is not possible to change the frequencies.def filename nor to install it (default))
 ```
 262 DO C
 277 DO# REb C# Db
@@ -111,8 +112,8 @@ write some small musics synth files.
 And thus it is possible to play a little song :
 
 ```bash
-cd  bin/synth
-./synth ../../tests/song.synth
+cd tests  <--- important because the frequencies.def file must be in current directory
+synth ../../tests/song.synth
 ```
 
 In that case, the frequencies.def file must exist in the current folder (yet)
