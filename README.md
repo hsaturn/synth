@@ -2,11 +2,18 @@
 
 ![Oscillograph](doc/osc.png)
 
-Real time dynamic sound generator.
+Real time dynamic sound generator / library. 
+
+[Listen the demo here](tests/synth.ogg)
 
 Also, a good code sample for SDL AudioDevice real time manipulation.
+
 You, developper may want to use only the end of the synth.cpp file (from void audioCallback(...) to the end).
+
 This one file c++ file is able to generate very complicated sound such as a synthetiser.
+
+The library allows to create sounds that are continuously generated and updated.
+For example, a sinus generator may follow smoothly and in real time a float value (frequency) that changes in the main program.
 
 # features
 
