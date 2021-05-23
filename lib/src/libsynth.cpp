@@ -92,7 +92,6 @@ void SquareGenerator::help(Help& help) const
 SinusGenerator::SinusGenerator(istream& in)
 {
     readFrequencyVolume(in);
-    a = 0;
 }
 
 bool SinusGenerator::_setValue(string name, istream& in)
@@ -131,7 +130,7 @@ DistortionGenerator::DistortionGenerator(istream& in)
 
 void DistortionGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    sgfloat  l, r;
+    sgfloat  l=0, r=0;
     generator->next(l, r, speed);
     l *= level;
     r *= level;

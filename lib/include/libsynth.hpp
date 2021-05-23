@@ -441,7 +441,7 @@ class SinusGenerator : public SoundGenerator
 
 
   private:
-	sgfloat  a;
+	sgfloat  a=0;
 	sgfloat  da;
 };
 
