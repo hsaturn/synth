@@ -125,7 +125,7 @@ void SinusGenerator::help(Help& help) const
 
 DistortionGenerator::DistortionGenerator(istream& in)
 {
-	level = 1.0f + readFloat(in, 0, 100, "level")/100.0f;
+    level = 1.0f + readFloat(in, 0, 100, "level")/100.0f;
     generator = factory(in, true);
 }
 
@@ -156,7 +156,7 @@ void DistortionGenerator::help(Help& help) const
 
 LevelSound::LevelSound(istream& in)
 {
-	level = (readFloat(in, 0, 100, "level")-50) / 50.0f;
+    level = (readFloat(in, 0, 100, "level")-50) / 50.0f;
 }
 
 void LevelSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
@@ -448,8 +448,8 @@ void MonoGenerator::help(Help& help) const
 
 AmGenerator::AmGenerator(istream& in)
 {
-	min = readFloat(in, 0, 300, "min") / 100.0;
-	max = readFloat(in, 0, 300, "max") / 100.0;
+    min = readFloat(in, 0, 300, "min") / 100.0;
+    max = readFloat(in, 0, 300, "max") / 100.0;
 
     generator = factory(in, true);
     if (in.good()) modulator = factory(in, true);
@@ -727,7 +727,9 @@ void ChainSound::help(Help& help) const
     entry->addOption(new HelpOption("adsr", "Sounds will be played with an adsr", HelpOption::GENERATOR));
     entry->addOption(new HelpOption("ms xxx", "Set default duration (can appear many times"));
     entry->addOption(new HelpOption("gaps ms", "Gaps between sounds (can appear many times)", HelpOption::OPTIONAL));
-    entry->addOption(new HelpOption("[ms] sound", "Duration /  Sound generator", HelpOption::REPEAT));
+    entry->addOption(new HelpOption("[ms|x#] sound", "Duration (absolute or default multiplied) and sound generator", HelpOption::REPEAT));
+    entry->addOption(new HelpOption("gen generator", "Avoid name of generator for the chain (ex: chain gen sinus 100 200 300 400 end)"));
+    entry->addOption(new HelpOption("loop", "loop sequence (and end of chain generator"));
     entry->addOption(new HelpOption("end", "end of sequence"));
     help.add(entry);
 }
@@ -737,6 +739,7 @@ ChainSound::ChainSound(istream& in)
     adsr = 0;
     uint32_t ms = 0;
     uint32_t def_ms = 0;
+    string generator;
     while (in.good())
     {
         string sms;
@@ -746,7 +749,17 @@ ChainSound::ChainSound(istream& in)
         if (sms == "end")
             break;
 
-        if (sms == "ms")
+        if (sms == "loop")
+        {
+            loop = true;
+            break;
+        }
+
+        if (sms == "gen")
+        {
+            in >> generator;
+        }
+        else if (sms == "ms")
         {
             in >> def_ms;
             if (def_ms <= 0)
@@ -769,7 +782,15 @@ ChainSound::ChainSound(istream& in)
         }
         else
         {
-            uint32_t delta = atol(sms.c_str());
+            uint32_t delta;
+            if (sms[0]=='x')
+            {
+                sms.erase(0,1);
+                delta = atol(sms.c_str()) * def_ms;
+            }
+            else
+            	delta = atol(sms.c_str());
+
             if (delta == 0)
             {
                 in.clear();
@@ -777,13 +798,13 @@ ChainSound::ChainSound(istream& in)
                 delta = def_ms;
                 if (delta == 0)
                 {
-                    cerr << "Chain: Missing duration (and no default duration)" << endl;
+                    cerr << "Chain: Missing duration (and/or no default duration)" << endl;
                     exit(1);
                 }
             }
             ms += delta;
 
-            SoundGenerator* sound = factory(in);
+            SoundGenerator* sound = factory(generator, in);
             if (sound)
                 add(ms, sound);
             else
@@ -837,6 +858,8 @@ void ChainSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
                 sound.sound->next(left, right, speed);
         }
     }
+    else if (loop)
+    	reset();
 }
 
 #endif /* LIBSYNTH_HPP */

@@ -31,6 +31,8 @@ class SoundGenerator
 
 	virtual ~SoundGenerator() { };
 
+	string name;
+
 	// Next sample to add to left and right 
 	// added value should be from -1 to 1
 	// speed = samples/sec modifier
@@ -53,6 +55,8 @@ class SoundGenerator
 	}
 
 	static SoundGenerator* factory(istream& in, bool needed = false);
+	static SoundGenerator* factory(string type, istream& in);
+
 	static SoundGenerator* factory(string s);
 	static string getTypes();
 
@@ -1040,50 +1044,51 @@ class AdsrGenerator : public SoundGenerator
 class ChainSound : public SoundGenerator
 {
 
-	class ChainElement
-	{
-	  public:
+		class ChainElement
+		{
+			public:
 
-		ChainElement(uint32_t ms, SoundGenerator* g) : t(ms / 1000.0), sound(g) { };
+			ChainElement(uint32_t ms, SoundGenerator* g) : t(ms / 1000.0), sound(g) { };
 
-		sgfloat  t;
-		SoundGenerator* sound;
-	};
+			sgfloat  t;
+			SoundGenerator* sound;
+		};
 
   public:
 
-	ChainSound() : SoundGenerator("chain") { }
+		ChainSound() : SoundGenerator("chain") { }
 
-	ChainSound(istream& in);
+		ChainSound(istream& in);
 
-	void add(uint32_t ms, SoundGenerator* g);
+		void add(uint32_t ms, SoundGenerator* g);
 
-	virtual void reset() override;
+		virtual void reset() override;
 
-	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
+		virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
-	virtual bool isValid() const override
-	{
-		return adsr != 0;
-	}
+		virtual bool isValid() const override
+		{
+			return true;
+		}
 
 
-	virtual void help(Help& help) const override;
+		virtual void help(Help& help) const override;
 
   private:
 
-	virtual SoundGenerator* build(istream& in) const override
-	{
-		return new ChainSound(in);
-	}
+		virtual SoundGenerator* build(istream& in) const override
+		{
+			return new ChainSound(in);
+		}
 
-	list<ChainElement> sounds;
-	list<ChainElement>::iterator it;
+		list<ChainElement> sounds;
+		list<ChainElement>::iterator it;
 
-	AdsrGenerator* adsr;
-	uint16_t gaps;
-	sgfloat  dt;
-	sgfloat  t;
+		AdsrGenerator* adsr;
+		uint16_t gaps;
+		sgfloat  dt;
+		sgfloat  t;
+		bool		 loop = false;
 };
 
 class Oscilloscope : public SoundGenerator

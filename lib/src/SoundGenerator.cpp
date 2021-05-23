@@ -118,10 +118,9 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 	else if (type.length())
 	{
 		last_type = type;
-		auto it = generators.find(last_type);
-		if (it != generators.end())
+		if (generators.find(type) != generators.end())
 		{
-			gen = it->second->build(in);
+			gen = factory(type, in);
 			if (gen == 0)
 			{
 				cerr << "libsynth, ERROR Unable to build " << last_type << endl;
@@ -150,12 +149,29 @@ SoundGenerator* SoundGenerator::factory(istream& in, bool needed)
 			missingGeneratorExit("");
 		else if (!gen->isValid())
 		{
-			cerr << "libsynth, ERROR Deleting invalid generator" << endl;
+			cerr << "libsynth, ERROR Deleting invalid generator (" << gen->name << ')' << endl;
 			delete gen;
 			gen = 0;
 		}
 	}
 	return gen;
+}
+
+SoundGenerator* SoundGenerator::factory(const std::string type, istream& in)
+{
+	if (type=="")
+	{
+		return factory(in);
+	}
+	auto it = generators.find(type);
+	if (it != generators.end())
+	{
+		SoundGenerator* generator=it->second->build(in);
+		if (generator) generator->name = type;
+		return generator;
+	}
+	else
+		return nullptr;
 }
 
 SoundGenerator::SoundGenerator(string name)
