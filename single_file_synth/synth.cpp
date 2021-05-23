@@ -312,15 +312,12 @@ class SinusGenerator : public SoundGenerator
 
 		virtual void next(float &left, float &right, float speed=1.0)
 		{
-			static int count=0;
-			count++;
 			a += da * speed;
 			float s = sin(a);
 			left += volume * s;
 			right += volume * s;
 			if (a > 2*M_PI)
 			{
-				count = 0;
 				a -= 2*M_PI;
 			}
 		}

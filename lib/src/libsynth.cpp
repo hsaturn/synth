@@ -108,15 +108,12 @@ bool SinusGenerator::_setValue(string name, istream& in)
 
 void SinusGenerator::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
-    static int count = 0;
-    count++;
     a += da * speed;
     sgfloat  s = sin(a);
     left += volume * s;
     right += volume * s;
     if (a > 2 * M_PI)
     {
-        count = 0;
         a -= 2 * M_PI;
     }
 }
