@@ -751,7 +751,7 @@ ChainSound::ChainSound(istream& in)
             in >> def_ms;
             if (def_ms <= 0)
             {
-                cerr << "Cannot have null default duration" << endl;
+                cerr << "Chain: Cannot have null default duration" << endl;
                 exit(1);
             }
         }
@@ -763,7 +763,7 @@ ChainSound::ChainSound(istream& in)
                 adsr = new AdsrGenerator(in);
             else
             {
-                cerr << "Cannot have multiple adsr" << endl;
+                cerr << "Chain: Cannot have multiple adsr" << endl;
                 exit(1);
             }
         }
@@ -777,7 +777,7 @@ ChainSound::ChainSound(istream& in)
                 delta = def_ms;
                 if (delta == 0)
                 {
-                    cerr << "No default duration (or missing duration)" << endl;
+                    cerr << "Chain: Missing duration (and no default duration)" << endl;
                     exit(1);
                 }
             }
