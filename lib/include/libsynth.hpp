@@ -303,7 +303,7 @@ class SoundGeneratorVarHook : public SoundGenerator
 	:
 	mref(v), mmin(min), mmax(max) { }
 
-	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0)
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override
 	{
 		sgfloat  delta = 2.0 * (sgfloat )(*mref - mmin) / (sgfloat )(mmax - mmin) - 1.0;
 
@@ -311,14 +311,14 @@ class SoundGeneratorVarHook : public SoundGenerator
 		right += delta;
 	}
 
-	virtual void help(ostream &out) const
+	virtual void help(ostream &out) const override
 	{
 		out << "Help not defined (SoundGeneratorVarHook)" << endl;
 	}
 
   protected:
 
-	virtual SoundGenerator* build(istream &in) const
+	virtual SoundGenerator* build(istream &in) const override
 	{
 		return new SoundGeneratorVarHook<T>(in, mref, mmin, mmax);
 	}
@@ -337,7 +337,7 @@ class WhiteNoiseGenerator : public SoundGenerator
 
 	WhiteNoiseGenerator(istream& in) { };
 
-	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0)
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override
 	{
 		left += SoundGenerator::rand();
 		right += SoundGenerator::rand();
@@ -345,12 +345,12 @@ class WhiteNoiseGenerator : public SoundGenerator
 
   protected:
 
-	virtual SoundGenerator* build(istream &in) const
+	virtual SoundGenerator* build(istream &in) const override
 	{
 		return new WhiteNoiseGenerator(in);
 	}
 
-	virtual void help(Help& help) const
+	virtual void help(Help& help) const override
 	{
 		help.add(new HelpEntry("wnoise", "Generator stereo white noise"));
 	}
@@ -369,18 +369,18 @@ class TriangleGenerator : public SoundGenerator
 
 	TriangleGenerator(istream& in);
 
-	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0);
-	virtual void reset();
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
+	virtual void reset() override;
 
   protected:
-	virtual bool _setValue(string name, istream& in);
+	virtual bool _setValue(string name, istream& in) override;
 
-	virtual SoundGenerator* build(istream& in) const
+	virtual SoundGenerator* build(istream& in) const override
 	{
 		return new TriangleGenerator(in);
 	}
 
-	virtual void help(Help& help) const;
+	virtual void help(Help& help) const override;
 
   private:
 	sgfloat  a;
@@ -399,18 +399,18 @@ class SquareGenerator : public SoundGenerator
 
 	SquareGenerator(istream& in);
 
-	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0);
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
 
   protected:
-	virtual bool _setValue(string name, istream& in);
+	virtual bool _setValue(string name, istream& in) override;
 
-	virtual SoundGenerator* build(istream& in) const
+	virtual SoundGenerator* build(istream& in) const override
 	{
 		return new SquareGenerator(in);
 	}
 
-	virtual void help(Help& help) const;
+	virtual void help(Help& help) const override;
 
   private:
 	sgfloat  a;
@@ -427,17 +427,17 @@ class SinusGenerator : public SoundGenerator
 
 	SinusGenerator(istream& in);
 
-	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0);
+	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 1.0) override;
 
   protected:
-	virtual bool _setValue(string name, istream& in);
+	virtual bool _setValue(string name, istream& in) override;
 
-	virtual SoundGenerator* build(istream& in) const
+	virtual SoundGenerator* build(istream& in) const override
 	{
 		return new SinusGenerator(in);
 	}
 
-	virtual void help(Help& help) const;
+	virtual void help(Help& help) const override;
 
 
   private:
@@ -483,11 +483,6 @@ class LevelSound : public SoundGenerator
 	LevelSound(istream &in);
 
 	virtual void next(sgfloat  &left, sgfloat  &right, sgfloat  speed = 0.1) override;
-
-	virtual void help(ostream &out) const
-	{
-		out << "level value : constant level" << endl;
-	}
 
   protected:
 
@@ -816,7 +811,7 @@ class AvcRegulator : public SoundGenerator
 
 	AvcRegulator(istream &in);
 
-	virtual void reset()
+	virtual void reset() override
 	{
 		gain = 1.0f;
 	}
@@ -877,12 +872,12 @@ class LowFilter : public Filter
 	
   protected:
 	
-	virtual SoundGenerator* build(istream& in) const
+	virtual SoundGenerator* build(istream& in) const override
 	{
 		return new LowFilter(in);
 	}
 
-	virtual void help(Help& help) const;
+	virtual void help(Help& help) const override;
 };
 
 class HighFilter : public Filter
