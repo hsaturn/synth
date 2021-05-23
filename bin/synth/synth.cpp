@@ -50,7 +50,7 @@ int main(int argc, const char* argv[])
 
 	if (SoundGenerator::count()==0)
 	{
-		cerr << "Parsing ok, but not generator list is empty" << endl;
+		cerr << "Parsing ok, but no generator list is empty" << endl;
 		exit(1);
 	}
 	//else

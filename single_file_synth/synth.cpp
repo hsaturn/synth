@@ -1371,7 +1371,7 @@ int main(int argc, const char* argv[])
 
 	if (list_generator.size()==0)
 	{
-		cerr << "Parsing ok, but not generator list is empty" << endl;
+		cerr << "Parsing ok, but generator list is empty" << endl;
 		exit(1);
 	}
 
