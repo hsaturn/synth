@@ -10,6 +10,18 @@ extern uint32_t samples_per_seconds;
 static map<string, sgfloat > sf;
 
 SDL_AudioSpec SoundGenerator::have;
+bool SoundGenerator::fading=false;
+sgfloat SoundGenerator::dvol=0.0;
+sgfloat SoundGenerator::main_volume = 1.0;
+
+void SoundGenerator::fade(int dir, int time_ms)
+{
+	if (dir==0) return;
+	fading = true;
+	if (time_ms <= 0) return;
+	dvol = 1000.0 / (sgfloat(time_ms) * (sgfloat) SoundGenerator::samplesPerSeconds());
+	if (dir < 0) dvol = -dvol;
+}
 
 SoundGenerator* SoundGenerator::factory(string s)
 {
@@ -209,6 +221,15 @@ void SoundGenerator::audioCallback(void *unused, Uint8 *byteStream, int byteStre
 
 			for (auto generator : list_generator)
 				generator->next(left, right);
+
+			if (fading)
+			{
+				main_volume += dvol;
+				if (main_volume > 1.0) { main_volume=1; fading=false; }
+				if (main_volume < 0.0) { main_volume=0; fading=false; }
+			}
+			left  *= main_volume;
+			right *= main_volume;
 
 			if (left > 1.0)
 			{

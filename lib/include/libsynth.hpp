@@ -76,6 +76,14 @@ class SoundGenerator
 	static bool remove(SoundGenerator*); // Remove it
 	static bool has(SoundGenerator*, bool bLock = false); // Does it playing ?
 	
+	// Note: fade does not change the actual volume
+	// one may want to change it before calling fade_xx
+	static void fade_in(int time) { fade(1, time); }
+  static void fade_out(int time) { fade(-1, time); }
+
+	static void setVolume(sgfloat vol) { main_volume = vol; }
+	static sgfloat getVolume() { return main_volume; }
+
 	/**
 	 * Eat expected word if exist else 'in' is left unchanged and false is returned
 	 * @param in
@@ -271,6 +279,8 @@ class SoundGenerator
 	}
 
   private:
+  static void fade(int dir, int time);
+
 	static map<string, const SoundGenerator*> generators;
 	static map<string, string> defines;
 	static bool echo;
@@ -285,6 +295,9 @@ class SoundGenerator
 	static uint32_t wanted_buffer_size;
 	static uint32_t samples_per_seconds;
 	static SDL_AudioSpec have;
+	static bool fading;
+	static sgfloat dvol;      // delta (main_volume each dt)
+	static sgfloat main_volume;
 };
 
 template<class T>
@@ -1065,7 +1078,6 @@ class ChainSound : public SoundGenerator
 		{
 			return true;
 		}
-
 
 		virtual void help(Help& help) const override;
 

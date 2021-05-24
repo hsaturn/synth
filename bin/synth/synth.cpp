@@ -40,6 +40,9 @@ int main(int argc, const char* argv[])
 			input << arg << ' ';
 	}
 
+    SoundGenerator::setVolume(0);   // Avoid sound clicks at start
+	SoundGenerator::fade_in(10);
+
 	bool needed = true;
 	while(input.good())
 	{
@@ -56,7 +59,22 @@ int main(int argc, const char* argv[])
 	//else
 	//	cout << "Playing, sounds count = " << SoundGenerator::count() << endl;
 
-	SDL_Delay(duration); // Play for ms
+	const int fade_time=50;
+
+    if (duration > fade_time)
+    {
+	    SDL_Delay(duration-fade_time); // Play for ms
+	    cout << "Fading out" << endl;
+	    SoundGenerator::fade_out(fade_time);
+	    SDL_Delay(fade_time); // Play for 100 ms (while fade out)
+    }
+    else
+    {
+	    cout << "Fading out direct" << endl;
+	    SoundGenerator::fade_out(fade_time);
+	    SDL_Delay(fade_time); // Play for ms (while fading out)
+    }
+	    SDL_Delay(1000); // Wait till the end of buffer is played (avoid clicks) TODO this is buffer size dependant
 
 	return 0;
 }
