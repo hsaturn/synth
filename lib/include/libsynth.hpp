@@ -1084,6 +1084,7 @@ class ChainSound : public SoundGenerator
 		sgfloat  dt;
 		sgfloat  t;
 		bool		 loop = false;
+		sgfloat  mix_t=0.01; // duration of mix (sec)
 };
 
 class Oscilloscope : public SoundGenerator

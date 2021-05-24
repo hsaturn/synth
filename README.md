@@ -101,7 +101,6 @@ Any combinaison of arbitrary number of these :
 
 * frequencies.def file can be filled with notes frequencies making it easy to
 write some small musics synth files.
-(TODO: yet it is not possible to change the frequencies.def filename nor to install it (default))
 ```
 262 DO C
 277 DO# REb C# Db
@@ -120,12 +119,11 @@ And thus it is possible to play a little song :
 
 ```bash
 cd tests  <--- important because the frequencies.def file must be in current directory
-synth 2000 chain ms 250 gen sinus DO x2 RE MI x2 FA SOL LA SI DO2 RE2 end
+synth 8000 chain ms 250 gen sinus DO x2 RE MI x2 FA SOL LA SI mix 50 loop
 ```
 
 x2 are equivalent to 250x2
-
-TODO: remove ticks between notes (but this is hard)
+mix 50 avoids transitions clicks 
 
 Example of a engine noise that accelerates
 

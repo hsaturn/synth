@@ -737,6 +737,7 @@ void ChainSound::help(Help& help) const
     HelpEntry* entry = new HelpEntry("chain", "Chain sounds in sequence");
     entry->addOption(new HelpOption("adsr", "Sounds will be played with an adsr", HelpOption::GENERATOR));
     entry->addOption(new HelpOption("ms xxx", "Set default duration (can appear many times"));
+    entry->addOption(new HelpOption("mix {ms}", "Set mix duration between sounds (default "+to_string(mix_t)+")"));
     entry->addOption(new HelpOption("gaps ms", "Gaps between sounds (can appear many times)", HelpOption::OPTIONAL));
     entry->addOption(new HelpOption("[ms|x#] sound", "Duration (absolute or default multiplied) and sound generator", HelpOption::REPEAT));
     entry->addOption(new HelpOption("gen generator", "Avoid name of generator for the chain (ex: chain gen sinus 100 200 300 400 end)"));
@@ -766,7 +767,12 @@ ChainSound::ChainSound(istream& in)
             break;
         }
 
-        if (sms == "gen")
+        if (sms == "mix")
+        {
+            in >> mix_t;
+            mix_t /= 1000.0;
+        }
+        else if (sms == "gen")
         {
             in >> generator;
         }
@@ -800,7 +806,7 @@ ChainSound::ChainSound(istream& in)
                 delta = atol(sms.c_str()) * def_ms;
             }
             else
-            	delta = atol(sms.c_str());
+                delta = atol(sms.c_str());
 
             if (delta == 0)
             {
@@ -848,29 +854,65 @@ void ChainSound::reset()
 
 void ChainSound::next(sgfloat & left, sgfloat & right, sgfloat  speed)
 {
+    if (it==sounds.end() and loop) reset();
     if (it != sounds.end())
     {
         t += dt;
         ChainElement& sound = *it;
-        if (t > sound.t)
+        float mix_factor = 1.0; // old factor vs next_sound
+        SoundGenerator* next_sound = nullptr;
+        if (t >= sound.t)
         {
-            it++;
-            if (adsr)
+            if (mix_t != 0)
             {
-                adsr->reset();
-                adsr->setSound(it->sound);
+                auto next = it; ++next;
+                sgfloat dt=0;
+                if (next == sounds.end())
+                {
+                    next = sounds.begin();
+                }
+                next_sound = next->sound;
+                mix_factor = (sound.t + mix_t - t)/mix_t;
+            }
+
+            if (t >= sound.t + mix_t or next_sound == nullptr)
+            {
+                it++;
+                if (adsr)
+                {
+                    adsr->reset();
+                    adsr->setSound(it->sound);
+                }
             }
         }
         if (sound.sound)
         {
+            float next_left, next_right;
+            if (next_sound)
+            {
+                next_left = left;
+                next_right = right;
+            }
             if (adsr)
                 adsr->next(left, right, speed);
             else
                 sound.sound->next(left, right, speed);
+            if (next_sound)
+            {
+                if (adsr)
+                {
+                    adsr->reset();
+                    adsr->setSound(next_sound);
+                    adsr->next(next_left, next_right, speed);
+                }
+                else
+                    next_sound->next(next_left, next_right, speed);
+
+                left = mix_factor*left + (1.0-mix_factor)*next_left;
+                right = mix_factor*right + (1.0-mix_factor)*next_right;
+            }
         }
     }
-    else if (loop)
-    	reset();
 }
 
 #endif /* LIBSYNTH_HPP */
