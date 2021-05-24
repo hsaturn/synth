@@ -154,7 +154,7 @@ This kind of file is easier to read.
 engine is a sound defined by a fm modulator.
 
 The base sound is am 0 100 triangle 100:50 square 39.
-One can here that sound by using the synth utility.
+One can ear that sound by using the synth utility.
 
 ```bash
 > synth am 0 100 triangle 100:50 square 39
