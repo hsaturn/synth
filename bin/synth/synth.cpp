@@ -64,17 +64,15 @@ int main(int argc, const char* argv[])
     if (duration > fade_time)
     {
 	    SDL_Delay(duration-fade_time); // Play for ms
-	    cout << "Fading out" << endl;
 	    SoundGenerator::fade_out(fade_time);
 	    SDL_Delay(fade_time); // Play for 100 ms (while fade out)
     }
     else
     {
-	    cout << "Fading out direct" << endl;
 	    SoundGenerator::fade_out(fade_time);
 	    SDL_Delay(fade_time); // Play for ms (while fading out)
     }
-	    SDL_Delay(1000); // Wait till the end of buffer is played (avoid clicks) TODO this is buffer size dependant
+    SDL_Delay(1000); // Wait till the end of buffer is played (avoid clicks) TODO this is buffer size dependant
 
 	return 0;
 }
