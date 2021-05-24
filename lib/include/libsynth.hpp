@@ -833,7 +833,7 @@ class AvcRegulator : public SoundGenerator
 	}
 
 	SoundGenerator* generator;
-	sgfloat  speed;
+	sgfloat  factor = 0.999f;
 	sgfloat  gain;
 	sgfloat  min_gain;
 };

@@ -679,8 +679,19 @@ void AdsrGenerator::help(Help& help) const
 
 AvcRegulator::AvcRegulator(istream& in)
 {
-    // in >> speed;
-    speed = 0.999;
+    stringstream::pos_type last = in.tellg();
+    float f;
+    in >> f;
+
+    // TODO samplesPerSeconds dependant
+    if (f == 0)
+    {
+      in.clear();
+      in.seekg(last);
+    }
+    else
+      factor = f;
+
     min_gain = 0.05;
 
     generator = factory(in);
@@ -701,12 +712,12 @@ void AvcRegulator::next(sgfloat & left, sgfloat & right, sgfloat  sp)
 
         if (l > 0.95 || l<-0.95 || r > 0.95 || r<-0.95)
         {
-            gain *= speed;
+            gain *= factor;
             if (gain < min_gain)
                 gain = min_gain;
         }
         else if (gain < 1.0)
-            gain *= 1.0001;
+            gain *= 1.00001;    // TODO samplesPerSeconds dependant
 
         left += l;
         right += r;
@@ -716,6 +727,7 @@ void AvcRegulator::next(sgfloat & left, sgfloat & right, sgfloat  sp)
 void AvcRegulator::help(Help& help) const
 {
     HelpEntry* entry = new HelpEntry("avc", "Automatic volume control");
+    entry->addOption(new HelpOption("#", "Factor (1 none, 0.7 strongest"));
     entry->addOption(new HelpOption("sound", "Affected sound generator", HelpOption::GENERATOR));
     help.add(entry);
 }
