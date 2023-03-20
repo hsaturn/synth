@@ -4,7 +4,7 @@
 
 Real time dynamic sound generator / library. 
 
-[Listen the demo here](tests/synth.ogg)
+[Listen the demo here](tests/synth.ogg), please not that many  cracklings have been removed since the time I've recorded the demo.
 
 Also, a good code sample for SDL AudioDevice real time manipulation.
 
