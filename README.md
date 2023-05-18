@@ -4,6 +4,7 @@
 
 Real time dynamic sound generator / library. 
 
+Note: Some crackles have been fixed.
 [Listen the demo here](tests/synth.ogg), please not that many  cracklings have been removed since the time I've recorded the demo.
 
 Also, a good code sample for SDL AudioDevice real time manipulation.
@@ -218,7 +219,6 @@ static EngineSpeedHook instance;	// Needed to register the 'engine_speed' hook s
 
 One should create more sophisticated hooks. See mouse.cpp for the class that defines mouse_hook.
 
-It 
 
 
 # Examples
@@ -228,7 +228,7 @@ It
 440Hz sinus for 1000ms (1s)
  > synth 1000 sin 440
 
-Same, but lower
+Same, but volume 50%
  > synth 1000 sin 440:50
 
 220Hz chopped sinus (5x / sec) for 1sec
@@ -247,7 +247,7 @@ Mixing two signals, triangle @440Hz 50% volume and sinus 330Hz for 1sec
 
  > synth 1000000 am 0 100 fm 80 120 sq 440:25 tri 1 square 5 am 0 100 fm 80 120 sq 330:25 tri 1 square 6 fm 80 120 sinus 1200:30 sinus 3
  
- Group sounds togethers
+ Mix sounds togethers (called a group)
  > synth { sinus 220 sinus 330 sinus 110 }
 
  Use group in modulator (This can produce very complex sounds)
